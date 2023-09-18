@@ -1,0 +1,292 @@
+
+
+sudo systemctl start mysqlrouter.service
+sudo systemctl enable mysqlrouter.service
+
+
+mysqlsh --uri ic@10.0.0.12:6446
+
+mysql-js> var cluster = dba.getCluster("myCluster")
+mysql-js> cluster.status()
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "primary": "10.0.0.11:3306", 
+        "status": "OK", 
+        "statusText": "Cluster is ONLINE and can tolerate up to ONE failure.", 
+        "topology": {
+            "10.0.0.11:3306": {
+                "address": "10.0.0.11:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }, 
+            "10.0.0.12:3306": {
+                "address": "10.0.0.12:3306", 
+                "mode": "R/O", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }, 
+            "10.0.0.13:3306": {
+                "address": "10.0.0.13:3306", 
+                "mode": "R/O", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }
+        }
+    }
+}
+
+
+###########
+# On ic1: #
+###########
+
+mysqlrouter --bootstrap ic:oracle@10.0.0.11:3306 --directory /opt/mysql/router --user=vagrant --force
+
+Error: The provided server is not an updatable member of the cluster. Please try again with the Primary member of the replicaset (2f2a2e7f-b8b9-11e7-a769-080027e5efc5).
+
+
+sudo mysqlrouter --bootstrap ic@10.0.0.11:3306 --directory myrouter1 --user=vagrant --force
+	Please enter MySQL password for ic: 
+
+	Reconfiguring MySQL Router instance at /home/vagrant/myrouter1...
+	WARNING: router_id 7 not found in metadata
+	MySQL Router  has now been configured for the InnoDB cluster 'myCluster'.
+
+	The following connection information can be used to connect to the cluster.
+
+	Classic MySQL protocol connections to cluster 'myCluster':
+	- Read/Write Connections: localhost:6446
+	- Read/Only Connections: localhost:6447
+
+	X protocol connections to cluster 'myCluster':
+	- Read/Write Connections: localhost:64460
+	- Read/Only Connections: localhost:64470
+
+	Existing configurations backed up to /home/vagrant/myrouter1/mysqlrouter.conf.bak
+
+
+myrouter1/start.sh
+# or
+mysqlrouter &
+
+
+###########
+# On ic3: #
+###########
+
+sudo mysqlrouter --bootstrap ic@10.0.0.11:3306 --directory myrouter3 --user=vagrant --force
+	Please enter MySQL password for ic: 
+
+	Bootstrapping MySQL Router instance at /home/vagrant/myrouter3...
+	MySQL Router  has now been configured for the InnoDB cluster 'myCluster'.
+
+	The following connection information can be used to connect to the cluster.
+
+	Classic MySQL protocol connections to cluster 'myCluster':
+	- Read/Write Connections: localhost:6446
+	- Read/Only Connections: localhost:6447
+
+	X protocol connections to cluster 'myCluster':
+	- Read/Write Connections: localhost:64460
+	- Read/Only Connections: localhost:64470
+
+myrouter3/start.sh
+
+
+###########
+# On ic2: #
+###########
+
+mysql -uic -poracle -P6446  -h10.0.0.11 -e "select @@hostname"
+mysql -uic -poracle -P6446  -h10.0.0.11 -e "select @@hostname"
+mysql -uic -poracle -P6446  -h10.0.0.11 -e "select @@hostname"
+
+mysql -uic -poracle -P6447  -h10.0.0.11 -e "select @@hostname"
+mysql -uic -poracle -P6447  -h10.0.0.11 -e "select @@hostname"
+mysql -uic -poracle -P6447  -h10.0.0.11 -e "select @@hostname"
+
+
+mysql -uic -poracle -P6446  -h10.0.0.13 -e "select @@hostname"
+mysql -uic -poracle -P6446  -h10.0.0.13 -e "select @@hostname"
+mysql -uic -poracle -P6446  -h10.0.0.13 -e "select @@hostname"
+
+mysql -uic -poracle -P6447  -h10.0.0.13 -e "select @@hostname"
+mysql -uic -poracle -P6447  -h10.0.0.13 -e "select @@hostname"
+mysql -uic -poracle -P6447  -h10.0.0.13 -e "select @@hostname"
+
+
+
+# On ic3:
+
+sudo yum install -y meb-4.1.0-el7.x86_64.rpm
+sudo -i
+export PATH=$PATH:/opt/mysql/meb-4.1/bin
+
+
+mysqlbackup -uroot -poracle --socket=/var/lib/mysql/mysql.sock --backup-dir=/home/vagrant/backup --backup-image=full_backup.img --with-timestamp --progress-interval=10 backup-to-image
+
+
+# mysqlbackup -uroot -poracle --host=10.0.0.13 --port=6446 --backup-dir=/home/vagrant/backup --backup-image=full_backup.img --with-timestamp --progress-interval=10 backup-to-image
+
+# mysqlbackup --user=root --password=oracle --socket=/tmp/mysql_5617.sock --backup-dir=/home/khollman/ofi/_MySQL/Docs/MEB/test --backup-image=full_backup.img --with-timestamp --read-threads=$1 --write-threads=$2 --process-threads=$3 --limit-memory=$4 --number-of-buffers=$5  backup-to-image
+
+ls -lrt /home/vagrant/backup
+2017-10-05_09-08-03
+
+scp /home/vagrant/backup/2017-10-05_09-08-03/full_backup.img mysql@ic1:/tmp/mysql_backup
+
+
+# On ic1:
+
+sudo systemctl stop mysqld.service
+sudo rm -rf /var/lib/mysql
+
+sudo yum install -y meb-4.1.0-el7.x86_64.rpm
+sudo -i
+export PATH=$PATH:/opt/mysql/meb-4.1/bin
+
+
+mysqlbackup --backup-image=/home/vagrant/backup/2017-10-05_09-08-03/full_backup.img --backup-dir=/tmp/mysql_backup image-to-backup-dir
+
+cp -r /tmp/mysql_backup/datadir /var/lib/mysql
+cd /var/lib
+chown -R mysql:mysql mysql
+cd /var/lib/mysql
+mv ic3* ic1*
+
+sudo systemctl start mysqld.service
+
+
+cat /tmp/mysql_backup/meta/backup_gtid_executed.sql
+
+	# On a new slave, issue the following command if GTIDs are enabled:
+	  SET @@GLOBAL.GTID_PURGED='07d2d70b-a523-11e7-a1f7-080027e5efc5:1-11,a5731418-a523-11e7-ba38-080027e5efc5:1-42:1000011-1000014';
+
+	# Use the following command if you want to use the GTID handshake protocol:
+	# CHANGE MASTER TO MASTER_AUTO_POSITION=1; 
+
+mysql -uroot -poracle
+
+mysql> reset master;
+mysql> SET @@GLOBAL.GTID_PURGED='07d2d70b-a523-11e7-a1f7-080027e5efc5:1-11,a5731418-a523-11e7-ba38-080027e5efc5:1-42:1000011-1000014';
+
+
+# On ic2, for example:
+var cluster = dba.getCluster("myCluster")
+cluster.status()
+
+ cluster.addInstance('ic@10.0.0.11:3306')
+A new instance will be added to the InnoDB cluster. Depending on the amount of
+data on the cluster this might take from a few seconds to several hours.
+
+Please provide the password for 'ic@10.0.0.11:3306': 
+Adding instance to the cluster ...
+
+The instance 'ic@10.0.0.11:3306' was successfully added to the cluster.
+
+mysql-js> cluster.status()
+
+
+#######################################################
+# Stop instance just for maintenance, patching, etc.:
+
+# On ic3 (current master):
+systemctl stop mysqld.service
+
+# on ic2:
+cluster.status()
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "primary": "10.0.0.11:3306", 
+        "status": "OK_NO_TOLERANCE", 
+        "statusText": "Cluster is NOT tolerant to any failures. 1 member is not active", 
+        "topology": {
+            "10.0.0.11:3306": {
+                "address": "10.0.0.11:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }, 
+            "10.0.0.12:3306": {
+                "address": "10.0.0.12:3306", 
+                "mode": "R/O", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }, 
+            "10.0.0.13:3306": {
+                "address": "10.0.0.13:3306", 
+                "mode": "R/O", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "(MISSING)"
+            }
+        }
+    }
+}
+
+# Restart ic3 after service outage (patching, etc.)
+systemctl start mysqld.service
+
+# Back on ic2:
+cluster.rejoinInstance('ic@10.0.0.13:3306')
+Rejoining the instance to the InnoDB cluster. Depending on the original
+problem that made the instance unavailable, the rejoin operation might not be
+successful and further manual steps will be needed to fix the underlying
+problem.
+
+Please monitor the output of the rejoin operation and take necessary action if
+the instance cannot rejoin.
+
+Please provide the password for 'ic@10.0.0.13:3306': 
+Rejoining instance to the cluster ...
+
+The instance 'ic@10.0.0.13:3306' was successfully rejoined on the cluster.
+
+The instance '10.0.0.13:3306' was successfully added to the MySQL Cluster.
+
+
+mysql-js> cluster.status()
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "primary": "10.0.0.11:3306", 
+        "status": "OK", 
+        "statusText": "Cluster is ONLINE and can tolerate up to ONE failure.", 
+        "topology": {
+            "10.0.0.11:3306": {
+                "address": "10.0.0.11:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }, 
+            "10.0.0.12:3306": {
+                "address": "10.0.0.12:3306", 
+                "mode": "R/O", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }, 
+            "10.0.0.13:3306": {
+                "address": "10.0.0.13:3306", 
+                "mode": "R/O", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }
+        }
+    }
+}
+
+

@@ -1,0 +1,166 @@
+# just in case, removal:
+sudo systemctl stop mysqld.service
+rm -rf /etc/my.cnf
+rm -rf /var/lib/mysql/*
+rm -rf /var/log/mysqld.log
+rm -rf /opt/mysql/*
+sudo yum remove -y mysql-shell mysql-commercial-common mysql-commercial-libs mysql-commercial-client mysql-commercial-server mysql-router-commercial mysql-community 
+
+
+# python is a must:
+sudo yum install python
+
+# numactl is needed:
+sudo yum install numactl
+
+
+# Install:
+sudo yum install -y mysql-commercial-common-5.7.19-1.1.el7.x86_64.rpm mysql-commercial-client-5.7.19-1.1.el7.x86_64.rpm mysql-commercial-libs-5.7.19-1.1.el7.x86_64.rpm mysql-commercial-server-5.7.19-1.1.el7.x86_64.rpm 
+sudo yum install -y mysql-router-commercial-2.1.4-1.1.el7.x86_64.rpm mysql-shell-8.0.3-0.1.dmr.el7.x86_64.rpm meb-4.1.0-el7.x86_64.rpm
+
+sudo systemctl start mysqld.service
+sudo systemctl enable mysqld.service
+
+sudo vi + /etc/my.cnf
+# insert the following at the end, to avoid having to create complex passwords:
+..
+..
+validate-password=OFF
+
+# Then restart mysql:
+sudo systemctl restart mysqld.service
+
+# Change the root password:
+sudo grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1
+mysql -uroot -p 
+
+SET sql_log_bin = OFF; 
+alter user 'root'@'localhost' identified by 'oracle';
+SET sql_log_bin = ON; 
+exit
+
+sudo -i
+mysqlsh --uri root:oracle@localhost:3306
+
+dba.configureLocalInstance()
+sudo systemctl restart mysqld.service
+
+mysql -uroot -poracle << EOF 
+SET sql_log_bin = OFF; 
+alter user 'ic'@'%' identified by 'oracle';
+SET sql_log_bin = ON; 
+EOF
+
+sudo vi + /etc/my.cnf
+# Comment out the "disabled_storage_engines" entry:
+..
+..
+#disabled_storage_engines = MyISAM,BLACKHOLE,FEDERATED,CSV,ARCHIVE
+
+systemctl restart mysqld.service
+mysqlsh
+ dba.checkInstanceConfiguration('ic:oracle@ic2:3306')
+
+# And on each node, do the same:
+ dba.checkInstanceConfiguration('ic:oracle@ic1:3306')
+ dba.checkInstanceConfiguration('ic:oracle@ic3:3306')
+
+
+
+# Bug 87300: https://bugs.mysql.com/bug.php?id=87300
+# Bug 26609909 : MYSQL-SHELL DBA.CHECKINSTANCECONFIGURATION
+# Shell 
+mysql -uroot -poracle << EOF 
+SET sql_log_bin = OFF; 
+# GRANT SELECT ON sys.* TO ic@'%' WITH GRANT OPTION;
+GRANT SELECT ON *.* TO ic@'%' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON mysql_innodb_cluster_metadata.* TO ic@'%' WITH GRANT OPTION;
+GRANT RELOAD, SHUTDOWN, PROCESS, FILE, SUPER, REPLICATION SLAVE, REPLICATION CLIENT, CREATE USER ON *.* TO ic@'%';
+GRANT SELECT ON performance_schema.* TO ic@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON mysql.* TO ic@'%';
+ FLUSH PRIVILEGES;
+SET sql_log_bin = ON; 
+EOF
+
+# On just one server, doesn't matter which:
+mysqlsh --uri ic:oracle@ic2:3306
+
+# Default single primary:
+var cluster = dba.createCluster( 'myCluster')
+
+cluster.status();
+
+cluster.addInstance('ic:oracle@ic1:3306')
+cluster.addInstance('ic:oracle@ic3:3306')
+
+cluster.status();
+
+
+# Make the changes persistent in my.cnf, run locally on each machine:
+# ic2
+mysqlsh
+dba.configureLocalInstance('ic:oracle@ic2:3306')
+
+#ic1
+# Say Y to when it asks you to override SUPER READ ONLY mode, otherwise no changes will occur.
+mysqlsh
+dba.configureLocalInstance('ic:oracle@ic1:3306')
+
+# ic3
+# Say Y to when it asks you to override SUPER READ ONLY mode, otherwise no changes will occur.
+mysqlsh
+dba.configureLocalInstance('ic:oracle@ic3:3306')
+
+
+mysqlsh --uri ic:oracle@ic2:3306
+
+var cluster = dba.getCluster( 'myCluster')
+cluster.status()
+
+
+# MySQL Router:
+# On ic1:
+sudo mkdir /opt/mysql/router
+chown -R mysql:mysql /opt/mysql/router
+mysqlrouter --bootstrap ic:oracle@10.0.0.12:3306 --directory /opt/mysql/router --user=mysql 
+/opt/mysql/router/start.sh
+
+# On ic3:
+sudo mkdir /opt/mysql/router
+chown -R mysql:mysql /opt/mysql/router
+mysqlrouter --bootstrap ic:oracle@10.0.0.12:3306 --directory /opt/mysql/router --user=mysql --force
+/opt/mysql/router/start.sh
+
+mysqlrouter --bootstrap ic:oracle@10.0.0.12:3306 --directory /opt/mysql/router --conf-use-sockets 
+
+# Try this on both ic3 (or ic1):
+mysql -uic -poracle -P6446  -h10.0.0.11 -e "select @@hostname"
+mysql -uic -poracle -P6446  -h10.0.0.11 -e "select @@hostname"
+mysql -uic -poracle -P6446  -h10.0.0.11 -e "select @@hostname"
+
+mysql -uic -poracle -P6447  -h10.0.0.11 -e "select @@hostname"
+mysql -uic -poracle -P6447  -h10.0.0.11 -e "select @@hostname"
+mysql -uic -poracle -P6447  -h10.0.0.11 -e "select @@hostname"
+
+# And on ic1 or ic3:
+mysql -uic -poracle -P6446  -h10.0.0.13 -e "select @@hostname"
+mysql -uic -poracle -P6446  -h10.0.0.13 -e "select @@hostname"
+mysql -uic -poracle -P6446  -h10.0.0.13 -e "select @@hostname"
+
+mysql -uic -poracle -P6447  -h10.0.0.13 -e "select @@hostname"
+mysql -uic -poracle -P6447  -h10.0.0.13 -e "select @@hostname"
+mysql -uic -poracle -P6447  -h10.0.0.13 -e "select @@hostname"
+
+# Let's read from all 3 instances:
+vi  /opt/mysql/router/mysqlrouter.conf
+..
+[routing:myCluster_default_ro]
+bind_address=0.0.0.0
+bind_port=6447
+#destinations=metadata-cache://myCluster/default?role=SECONDARY
+destinations=ic1,ic2,ic3
+mode=read-only
+protocol=classic
+..
+
+# Next up, a complete disaster recovery situation.

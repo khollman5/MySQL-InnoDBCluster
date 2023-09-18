@@ -1,0 +1,57 @@
+
+create database test;
+drop table test.t;
+create table test.t (col1 int not null auto_increment, col2 timestamp, col3 varchar(10), primary key (col1 ));
+insert into test.t(col2,col3) values (sysdate(),@@hostname);
+select * from test.t;
+
+ins_test.t.sql:
+ insert into test.t(col2,col3) values (sysdate(),@@hostname);
+ select * from test.t;
+
+mysql -uic -P6446 -h centos02 -e "source ins_test.t.sql"
+
+
+# On any server:
+sudo -i
+mkdir -p /opt/mysql/myrouter
+chown -R mysql:mysql /opt/mysql/myrouter
+cd /opt/mysql
+mysqlrouter --bootstrap ic@centos02:3306 -d /opt/mysql/myrouter -u mysql
+#
+# Router config examples:
+# Multimaster: #use_gr_notifications=1, 6446, role=PRIMARY_AND_SECONDARY, routing_strategy=round-robin
+# Multimaster: #use_gr_notifications=1, 6446, role=SECONDARY, routing_strategy=round-robin-with-fallback
+# Multimaster: #use_gr_notifications=1, 6446, role=PRIMARY, routing_strategy=round-robin
+# Multimaster: #use_gr_notifications=1, 6446, role=PRIMARY, routing_strategy=first-available
+#
+./myrouter/start.sh 
+
+# Run some loading via mysqlslap.
+#
+# Execute the following, on each of the 3 nodes, hence, resulting rows = 3x.
+# All connections to go via Router port 6446 and conigured routing strategy in place at time.
+#
+# iterations=2 conc=10 == TOTAL: 20
+mysqlslap --user=ic -h centos02 -P 6446 --number-of-queries=1 --iterations=2 --concurrency=10 --delimiter="/n" --create-schema=test --query="ins_test.t.sql" --verbose
+
+# iterations=20 conc=100 == TOTAL: 2000
+mysqlslap --user=ic -h centos02 -P 6446 --number-of-queries=10 --iterations=20 --concurrency=100 --delimiter="/n" --create-schema=test --query="ins_test.t.sql" --verbose
+
+# iterations=20 conc=200 == TOTAL: 4000
+mysqlslap --user=ic -h centos02 -P 6446 --number-of-queries=10 --iterations=20 --concurrency=200 --delimiter="/n" --create-schema=test --query="ins_test.t.sql" --verbose >> slap_01.log
+
+# Now, kill an instance mid-slap and observe what happens.
+systemctl stop mysqld
+
+
+# In another session window:
+mysql -uic -P6447 -h centos02 test -e "select col3, count(*) from t group by col3; select count(*) from t;"
+
+# After test:
+mysql -uic -P6447 -h centos02 test -e "truncate table t;"
+
+
+mysql -uic -h centos01 -P 7002 -N -e "select @@hostname, @@port;"
+
+

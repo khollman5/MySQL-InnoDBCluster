@@ -1,0 +1,91 @@
+sudo yum remove -y mysql-router mysql-shell mysql-community-common mysql-community-libs mysql-community-client mysql-community-server
+sudo yum remove -y mysql-router-commercial mysql-shell-commercial mysql-commercial-common mysql-commercial-libs mysql-commercial-client mysql-commercial-server
+
+yum install -y mysql-commu*8.0.4*rpm
+
+Installed:
+  mysql-commercial-backup.x86_64 0:8.0.4-0.1.rc.1.el7         mysql-commercial-client.x86_64 0:8.0.4-0.1.rc.1.el7   
+  mysql-commercial-common.x86_64 0:8.0.4-0.1.rc.1.el7         mysql-commercial-libs.x86_64 0:8.0.4-0.1.rc.1.el7     
+  mysql-commercial-libs-compat.x86_64 0:8.0.4-0.1.rc.1.el7    mysql-commercial-server.x86_64 0:8.0.4-0.1.rc.1.el7   
+
+yum install -y mysql-shell-8.0.3-0.1.dmr.el7.x86_64.rpm
+
+sudo systemctl start mysqld.service
+sudo systemctl enable mysqld.service
+
+
+# grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1
+2017-12-18T20:04:16.053003Z 5 [Note] [MY-010454] A temporary password is generated for root@localhost: //=W8pp%bo(_
+
+# mysql -uroot -p 
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.0.4-rc-enterprise-commercial-advanced-log
+
+Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> SET sql_log_bin = OFF; 
+Query OK, 0 rows affected (0,01 sec)
+
+mysql> alter user 'root'@'localhost' identified by '0Rac1€123';
+Query OK, 0 rows affected (0,03 sec)
+
+mysql> SET sql_log_bin = ON; 
+Query OK, 0 rows affected (0,00 sec)
+
+mysql> exit
+Bye
+[root@ic2 ~]# mysqlsh --log-level=debug3
+MySQL Shell 8.0.3-dmr
+
+Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+
+ MySQL  JS > dba.configureLocalInstance();
+Please provide the password for 'root@localhost:3306': ***********
+
+Detecting the configuration file...
+Found configuration file at standard location: /etc/my.cnf
+
+Do you want to modify this file? [Y|n]:  [Y|n]: 
+MySQL user 'root' cannot be verified to have access to other hosts in the network.
+
+1) Create root@% with necessary grants
+2) Create account with different name
+3) Continue without creating account
+4) Cancel
+
+Please select an option [1]: 2
+Please provide an account name (e.g: icroot@%) to have it created with the necessary
+privileges or leave empty and press Enter to cancel.
+
+Account Name: ic
+Password for new account: ***********
+Confirm password: ***********
+Validating instance...
+
+The issues above can be fixed dynamically to get the server ready for InnoDB Cluster.
+
+{
+    "errors": [
+        "Error checking instance: 'localhost:3306' - Authentication plugin 'caching_sha2_password' is not supported"
+    ], 
+    "restart_required": false, 
+    "status": "error"
+}
+ MySQL  JS > \q
+
+
+

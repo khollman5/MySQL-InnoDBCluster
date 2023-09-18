@@ -1,0 +1,223 @@
+https://www.slideshare.net/lefred.descamps/mysql-innodb-cluster-and-group-replication-in-a-nutshell-handson-tutorial-with-mysql-enterprise-backup
+
+
+# On master:
+mysql -uroot -poracle << EOF 
+SET sql_log_bin = OFF; 
+ create user 'backup'@'%' identified by 'oracle';
+ grant all on *.* to 'backup'@'%';
+SET sql_log_bin = ON; 
+EOF
+
+mysqlsh --uri root:oracle@localhost:3306 --sql
+create database nexus;
+
+
+# Remote backup has no access to bin-log index file:
+
+mysqlbackup -ubackup -poracle --host=10.0.0.12 --port=3306 \
+--backup-dir=/home/vagrant/backup --backup-image=full_backup.img \
+--with-timestamp backup-to-image
+
+
+171019 23:31:50 RDR1    INFO: Could not find binlog index file. binlogs will not be copied for this backup.
+ Point-In-Time-Recovery will not be possible.
+ If this is online backup then server may not have started with --log-bin.
+ You may specify its location with --log-bin-index option.
+
+
+# So run it locally:
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+--backup-dir=/home/vagrant/backup/full --backup-image=full_backup.img \
+ backup-to-image
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+--backup-dir=/home/vagrant/backup/ --backup-image=full_backup.img \
+--with-timestamp backup-to-image
+
+# Only InnoDB tables:
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+--backup-dir=/home/vagrant/backup --backup-image=full_backup.img \
+--with-timestamp --only-innodb  backup-to-image
+
+
+ls /home/vagrant/backup/full/full_backup.img
+
+mysqlbackup --backup-image=/home/vagrant/backup/full/full_backup.img validate
+
+
+mysql -uroot -poracle
+
+create table nexus.replicant (
+id INT(11) NOT NULL AUTO_INCREMENT ,
+`First name` varchar(40) not null default '',
+`Last name` varchar(40) not null default '',
+`Replicant` enum('Yes','No') not null default 'Yes',
+PRIMARY KEY (id)
+) engine=InnoDB row_format=COMPACT;
+
+# rm -rf /home/vagrant/backup/temp_dir/*
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental=optimistic \
+--incremental-base=history:last_backup \
+  --backup-dir=/home/vagrant/backup/incre \
+  --backup-image=incr_backup1.mbi \
+   backup-to-image
+
+# Only InnoDB tables:
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental=optimistic \
+--incremental-base=history:last_backup \
+  --backup-dir=/home/vagrant/backup/temp_dir \
+  --backup-image=incr_backup1.mbi --only-innodb \
+   backup-to-image
+
+
+cat 2017-10-20_00-21-57/meta/backup_variables.txt
+..
+end_lsn=2767787
+..
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental=optimistic \
+--start-lsn=2767787 \
+  --backup-dir=/home/vagrant/backup/temp_dir \
+  --backup-image=incr_backup1.mbi --with-timestamp \
+   backup-to-image
+
+
+mysqlbackup --backup-image=/home/vagrant/backup/incre/incr_backup1.mbi validate
+
+
+INSERT INTO `replicant` (`First name`,`Last name`,`Replicant`)
+VALUES 
+('Roy','Hauer','Yes'),
+('Rutger','Batty','Yes'),
+('Voight','Kampff','Yes'),
+('Pris','Hannah','Yes'),
+('Daryl','Stratton','Yes'),
+('Rachael','Young','Yes'),
+('Sean','Tyrell','Yes'),
+('Rick','Ford','No'),
+('Harrison','Deckard','Yes');
+
+select * from replicant;
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental=optimistic \
+  --start-lsn=3032459 \
+  --backup-dir=/home/vagrant/backup/temp_dir \
+  --backup-image=incr_backup2.mbi --with-timestamp \
+   backup-to-image
+
+
+# On all 3 nodes:
+sudo -i
+systemctl stop mysqld.service
+rm -rf /var/lib/mysql/*
+rm -rf /var/log/mysqld.log
+
+# router
+/opt/mysql/router/stop.sh
+
+
+# First, restore the full optimistic backup :
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/full/full_backup.img \
+  --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql \
+  --with-timestamp \
+  copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-10-20_00-21-57/full_backup.img \
+  --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql \
+  --with-timestamp \
+  copy-back-and-apply-log
+
+
+# And then, restore incrementals:
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/incre/incr_backup1.mbi \
+  --incremental-backup-dir=/tmp/mysql_backup_pitr_incr --datadir=/var/lib/mysql --incremental \
+  --with-timestamp \
+  copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/incr_backup1.mbi \
+  --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental \
+  --with-timestamp \
+  copy-back-and-apply-log
+
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/2017-10-20_00-41-33/incr_backup2.mbi \
+  --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental \
+  --with-timestamp \
+  copy-back-and-apply-log
+
+
+# On ic2 (from where the backup was run:)
+chown -R mysql:mysql /var/lib/mysql/*
+systemctl start mysqld.service
+mysql -uroot -poracle  << EOF
+SET sql_log_bin = OFF; 
+reset master;
+# How To Manually Remove InnoDB Cluster Metadata Directory (Doc ID 2274320.1)
+drop database mysql_innodb_cluster_metadata;
+SET sql_log_bin = ON; 
+EOF
+
+mysqlsh --uri ic:oracle@10.0.0.12:3306
+dba.configureLocalInstance();
+dba.checkInstanceConfiguration('ic:oracle@10.0.0.12:3306')
+var cluster = dba.createCluster( 'myCluster');
+cluster.status();
+
+# ic1:
+mv ic2-bin.000001 ic1-bin.000001
+mv ic2-bin.000002 ic1-bin.000002
+mv ic2-bin.index ic1-bin.index
+echo "./ic1-bin.000001" > ic1-bin.index
+echo "./ic1-bin.000002" >> ic1-bin.index
+chown -R mysql:mysql /var/lib/mysql/*
+systemctl start mysqld.service
+mysql -uroot -poracle << EOF
+SET sql_log_bin = OFF; 
+reset master;
+drop database mysql_innodb_cluster_metadata;
+SET sql_log_bin = ON; 
+EOF
+
+mysqlsh --uri ic:oracle@10.0.0.11:3306
+dba.configureLocalInstance();
+dba.checkInstanceConfiguration('ic:oracle@10.0.0.11:3306')
+
+
+# ic3:
+mv ic2-bin.000001 ic3-bin.000001
+mv ic2-bin.000002 ic3-bin.000002
+mv ic2-bin.index ic3-bin.index
+echo "./ic3-bin.000001" > ic3-bin.index
+echo "./ic3-bin.000002" >> ic3-bin.index
+chown -R mysql:mysql /var/lib/mysql/*
+systemctl start mysqld.service
+mysql -uroot -poracle << EOF
+SET sql_log_bin = OFF; 
+reset master;
+drop database mysql_innodb_cluster_metadata;
+SET sql_log_bin = ON; 
+EOF
+
+mysqlsh --uri ic:oracle@10.0.0.13:3306
+dba.configureLocalInstance();
+dba.checkInstanceConfiguration('ic:oracle@10.0.0.13:3306')
+
+
+# Back on ic2:
+cluster.addInstance('ic@10.0.0.11:3306')
+cluster.addInstance('ic@10.0.0.13:3306')
+cluster.status()
+
+
+set SQL_LOG_BIN=OFF;
+set global super_read_only=0;
+set global event_scheduler=1;
+set SQL_LOG_BIN=ON;
+
+

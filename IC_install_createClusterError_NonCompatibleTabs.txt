@@ -1,0 +1,239 @@
+-bash-4.2$ sudo yum install -y mysql-commercial-* mysql-shell-commercial-1.0.10-1.1.el7.x86_64.rpm
+Loaded plugins: ulninfo
+Examining mysql-commercial-client-5.7.19-1.1.el7.x86_64.rpm: mysql-commercial-client-5.7.19-1.1.el7.x86_64
+Marking mysql-commercial-client-5.7.19-1.1.el7.x86_64.rpm to be installed
+Examining mysql-commercial-common-5.7.19-1.1.el7.x86_64.rpm: mysql-commercial-common-5.7.19-1.1.el7.x86_64
+Marking mysql-commercial-common-5.7.19-1.1.el7.x86_64.rpm to be installed
+Examining mysql-commercial-libs-5.7.19-1.1.el7.x86_64.rpm: mysql-commercial-libs-5.7.19-1.1.el7.x86_64
+Marking mysql-commercial-libs-5.7.19-1.1.el7.x86_64.rpm to be installed
+Examining mysql-commercial-server-5.7.19-1.1.el7.x86_64.rpm: mysql-commercial-server-5.7.19-1.1.el7.x86_64
+Marking mysql-commercial-server-5.7.19-1.1.el7.x86_64.rpm to be installed
+Examining mysql-shell-commercial-1.0.10-1.1.el7.x86_64.rpm: mysql-shell-commercial-1.0.10-1.1.el7.x86_64
+Marking mysql-shell-commercial-1.0.10-1.1.el7.x86_64.rpm to be installed
+Resolving Dependencies
+--> Running transaction check
+---> Package mysql-commercial-client.x86_64 0:5.7.19-1.1.el7 will be installed
+---> Package mysql-commercial-common.x86_64 0:5.7.19-1.1.el7 will be installed
+---> Package mysql-commercial-libs.x86_64 0:5.7.19-1.1.el7 will be installed
+---> Package mysql-commercial-server.x86_64 0:5.7.19-1.1.el7 will be installed
+---> Package mysql-shell-commercial.x86_64 0:1.0.10-1.1.el7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+===============================================================================================================
+ Package                   Arch     Version             Repository                                        Size
+===============================================================================================================
+Installing:
+ mysql-commercial-client   x86_64   5.7.19-1.1.el7      /mysql-commercial-client-5.7.19-1.1.el7.x86_64    95 M
+ mysql-commercial-common   x86_64   5.7.19-1.1.el7      /mysql-commercial-common-5.7.19-1.1.el7.x86_64   2.5 M
+ mysql-commercial-libs     x86_64   5.7.19-1.1.el7      /mysql-commercial-libs-5.7.19-1.1.el7.x86_64     8.6 M
+ mysql-commercial-server   x86_64   5.7.19-1.1.el7      /mysql-commercial-server-5.7.19-1.1.el7.x86_64   831 M
+ mysql-shell-commercial    x86_64   1.0.10-1.1.el7      /mysql-shell-commercial-1.0.10-1.1.el7.x86_64     17 M
+
+Transaction Summary
+===============================================================================================================
+Install  5 Packages
+
+Total size: 955 M
+Installed size: 955 M
+Downloading packages:
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : mysql-commercial-common-5.7.19-1.1.el7.x86_64                                               1/5 
+  Installing : mysql-commercial-libs-5.7.19-1.1.el7.x86_64                                                 2/5 
+  Installing : mysql-commercial-client-5.7.19-1.1.el7.x86_64                                               3/5 
+  Installing : mysql-commercial-server-5.7.19-1.1.el7.x86_64                                               4/5 
+  Installing : mysql-shell-commercial-1.0.10-1.1.el7.x86_64                                                5/5 
+  Verifying  : mysql-commercial-common-5.7.19-1.1.el7.x86_64                                               1/5 
+  Verifying  : mysql-commercial-libs-5.7.19-1.1.el7.x86_64                                                 2/5 
+  Verifying  : mysql-commercial-server-5.7.19-1.1.el7.x86_64                                               3/5 
+  Verifying  : mysql-shell-commercial-1.0.10-1.1.el7.x86_64                                                4/5 
+  Verifying  : mysql-commercial-client-5.7.19-1.1.el7.x86_64                                               5/5 
+
+Installed:
+  mysql-commercial-client.x86_64 0:5.7.19-1.1.el7        mysql-commercial-common.x86_64 0:5.7.19-1.1.el7       
+  mysql-commercial-libs.x86_64 0:5.7.19-1.1.el7          mysql-commercial-server.x86_64 0:5.7.19-1.1.el7       
+  mysql-shell-commercial.x86_64 0:1.0.10-1.1.el7        
+
+Complete!
+-bash-4.2$ cd /var/log
+-bash-4.2$ rm mysqld.log 
+rm: remove write-protected regular file ‘mysqld.log’? y
+rm: cannot remove ‘mysqld.log’: Permission denied
+-bash-4.2$ sudo rm mysqld.log 
+-bash-4.2$ sudo systemctl start mysqld.service
+-bash-4.2$ 
+-bash-4.2$ 
+-bash-4.2$ sudo systemctl enable mysqld.service
+-bash-4.2$ 
+-bash-4.2$ ls -lrt /var/log/mysqld.log 
+-rw-r-----. 1 mysql mysql 4694 sep 29 08:11 /var/log/mysqld.log
+-bash-4.2$ sudo vi + /etc/my.cnf
+-bash-4.2$ sudo systemctl restart mysqld.service
+-bash-4.2$ 
+-bash-4.2$ sudo grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1
+2017-09-29T08:11:43.633942Z 1 [Note] A temporary password is generated for root@localhost: Jfqq>crl9EGJ
+-bash-4.2$ mysql -uroot -p 
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3
+Server version: 5.7.19-enterprise-commercial-advanced
+
+Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> alter user 'root'@'localhost' identified by 'oracle';
+Query OK, 0 rows affected (0,00 sec)
+
+mysql> exit
+Bye
+-bash-4.2$ sudo -i
+[root@gr1 ~]# mysqlsh
+MySQL Shell 1.0.10
+
+Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+
+Currently in JavaScript mode. Use \sql to switch to SQL mode and execute queries.
+mysql-js> dba.configureLocalInstance();
+Please provide the password for 'root@localhost:3306': 
+
+Detecting the configuration file...
+Found configuration file at standard location: /etc/my.cnf
+Do you want to modify this file? [Y|n]:  [Y|n]: 
+MySQL user 'root' cannot be verified to have access to other hosts in the network.
+
+1) Create root@% with necessary grants
+2) Create account with different name
+3) Continue without creating account
+4) Cancel
+Please select an option [1]: 2
+Please provide an account name (e.g: icroot@%) to have it created with the necessary
+privileges or leave empty and press Enter to cancel.
+Account Name: ic
+Password for new account: 
+Confirm password: 
+Validating instance...
+
+The configuration has been updated but it is required to restart the server.
+
+{
+    "config_errors": [
+        {
+            "action": "restart", 
+            "current": "OFF", 
+            "option": "enforce_gtid_consistency", 
+            "required": "ON"
+        },
+        {
+            "action": "restart", 
+            "current": "OFF", 
+            "option": "gtid_mode", 
+            "required": "ON"
+        },
+        {
+            "action": "restart", 
+            "current": "0", 
+            "option": "log_bin", 
+            "required": "1"
+        },
+        {
+            "action": "restart", 
+            "current": "0", 
+            "option": "log_slave_updates", 
+            "required": "ON"
+        },
+        {
+            "action": "restart", 
+            "current": "FILE", 
+            "option": "master_info_repository", 
+            "required": "TABLE"
+        },
+        {
+            "action": "restart", 
+            "current": "FILE", 
+            "option": "relay_log_info_repository", 
+            "required": "TABLE"
+        },
+        {
+            "action": "restart", 
+            "current": "OFF", 
+            "option": "transaction_write_set_extraction", 
+            "required": "XXHASH64"
+        }
+    ], 
+    "errors": [], 
+    "restart_required": true, 
+    "status": "error"
+}
+mysql-js> \q
+Bye!
+[root@gr1 ~]# systemctl restart mysqld.service
+[root@gr1 ~]# mysqlsh
+MySQL Shell 1.0.10
+
+Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+
+Currently in JavaScript mode. Use \sql to switch to SQL mode and execute queries.
+mysql-js> dba.checkInstanceConfiguration('root@localhost:3306');
+Please provide the password for 'root@localhost:3306': 
+Validating instance...
+
+The instance 'localhost:3306' is valid for Cluster usage
+{
+    "status": "ok"
+}
+mysql-js> \q
+Bye!
+[root@gr1 ~]# mysqlsh --uri ic@10.0.0.11:3306
+Creating a Session to 'ic@10.0.0.11:3306'
+Enter password: 
+Your MySQL connection id is 6
+Server version: 5.7.19-enterprise-commercial-advanced-log MySQL Enterprise Server - Advanced Edition (Commercial)
+No default schema selected; type \use <schema> to set one.
+MySQL Shell 1.0.10
+
+Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+
+Currently in JavaScript mode. Use \sql to switch to SQL mode and execute queries.
+mysql-js> var cluster = dba.createCluster( 'myCluster');
+A new InnoDB cluster will be created on instance 'ic@10.0.0.11:3306'.
+
+Warning: The instance configuration needs to be changed in order to
+create an InnoDB cluster. To see which changes will be made, please
+use the dba.checkInstanceConfiguration() function before confirming
+to change the configuration.
+
+Should the configuration be changed accordingly? [y|N]: y
+
+Creating InnoDB cluster 'myCluster' on 'ic@10.0.0.11:3306'...
+Dba.createCluster: ERROR: 1 table(s) do not have a Primary Key or Primary Key Equivalent (non-null unique key).
+ERROR: Error starting cluster: The operation could not continue due to the following requirements not being met:
+Non-compatible tables found in database. (RuntimeError)
+mysql-js> 
+

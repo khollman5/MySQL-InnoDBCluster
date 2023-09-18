@@ -1,0 +1,129 @@
+
+# To setup a 2x node Group Replication env:
+#
+# https://scriptingmysql.wordpress.com/2019/03/28/mysql-8-0-group-replication-three-server-installation/
+
+# Add all servers to be included in the group to your /etc/hosts, on all servers:
+
+vi /etc/hosts
+10.0.0.41 olslave01 olslave01.sub09181354590.keithvcn.oraclevcn.com
+10.0.0.42 olslave02 olslave02.sub09181354590.keithvcn.oraclevcn.com
+
+sudo yum install -y mysql-*8.0.20*rpm
+sudo systemctl start mysqld.service
+sudo systemctl enable mysqld.service
+sudo grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1
+mysql -uroot -p
+
+SET sql_log_bin = OFF;
+alter user 'root'@'localhost' identified by 'Oracle20!8';
+create user 'ic'@'%' identified by 'Oracle20!8';
+grant all on <em>.</em> to 'ic'@'%' with grant option;
+flush privileges;
+SET sql_log_bin = ON;
+
+
+# In node 1:
+
+vi /etc/my.cnf
+ GR setup
+server-id                       =11
+log-bin                         =mysql-bin
+gtid-mode                       =ON
+enforce-gtid-consistency        =TRUE
+log_slave_updates               =ON
+binlog_checksum                 =NONE
+master_info_repository          =TABLE
+relay_log_info_repository       =TABLE
+transaction_write_set_extraction=XXHASH64
+
+plugin_load_add                 ="group_replication.so"
+group_replication               = FORCE_PLUS_PERMANENT
+group_replication_bootstrap_group = OFF
+  group_replication_start_on_boot = ON
+group_replication_group_name    = 8E2F4761-C55C-422F-8684-D086F6A1DB0E
+group_replication_local_address = '10.0.0.41:33061'
+ Adjust the following according to IP's and numbers of hosts in group:
+group_replication_group_seeds = '10.0.0.41:33061,10.0.0.42:33061'
+
+# On 2nd node:
+server-id                       =22
+log-bin                         =mysql-bin
+gtid-mode                       =ON
+enforce-gtid-consistency        =TRUE
+log_slave_updates               =ON
+binlog_checksum                 =NONE
+master_info_repository          =TABLE
+relay_log_info_repository       =TABLE
+transaction_write_set_extraction=XXHASH64
+
+plugin_load_add                 ="group_replication.so"
+group_replication               = FORCE_PLUS_PERMANENT
+group_replication_bootstrap_group = OFF
+ group_replication_start_on_boot = ON
+group_replication_group_name    = 8E2F4761-C55C-422F-8684-D086F6A1DB0E
+group_replication_local_address = '10.0.0.42:33061'
+ Adjust the following according to IP's and numbers of hosts in group:
+group_replication_group_seeds = '10.0.0.41:33061,10.0.0.42:33061'
+
+
+# Stop (if started) and start the servers again:
+systemctl start mysqld
+
+# Check the config for each server
+mysql -uroot
+
+SELECT * FROM performance_schema.replication_group_members;
+SELECT * FROM performance_schema.replication_group_members\G
+
+# Maybe you need to change the UUID for a server (if for example it's been cloned):
+cat /usr/local/mysql/data/auto.cnf
+# By removing this file from the o.s. and rebooting the instance, a new unique file will be created.
+
+
+# Check master status on the first server:
+SHOW MASTER STATUS\G
+
+# Check binlog events too:
+SHOW BINLOG EVENTS in 'mysql-bin.000001'\G
+
+# Check server2 status:
+SELECT * FROM performance_schema.replication_group_members;
+
+# Now check that the GR plugin has been installed ok on all servers:
+select * from information_schema.plugins where PLUGIN_NAME = 'group_replication'\G
+
+# I have previously created a user called 'ic@%' with 'grant all on *.*' for my testing, but a user like the following can be created.
+# Be aware that we need to avoid sending these commands to the binlogs, hence sql_log_bin=0 as thi would cause errors on the slaves when replication starts:
+
+SET SQL_LOG_BIN=0;
+CREATE USER rpl_user@'%' IDENTIFIED BY 'R3plic4tion!';
+GRANT REPLICATION SLAVE ON *.* TO rpl_user@'%';
+FLUSH PRIVILEGES;
+SET SQL_LOG_BIN=1;
+
+# Now to create the recovery replication channel on all servers (although this is for single primary setup, the master could fail and then come back as a Read-Only slave, so we need to set this up):
+#CHANGE MASTER TO MASTER_USER='rpl_user', MASTER_PASSWORD='R3plic4tion!' FOR CHANNEL 'group_replication_recovery';
+CHANGE MASTER TO MASTER_USER='ic', MASTER_PASSWORD='Oracle20!8' FOR CHANNEL 'group_replication_recovery';
+
+#
+# On Server 1:
+
+SET GLOBAL group_replication_bootstrap_group=ON;
+START GROUP_REPLICATION;
+SET GLOBAL group_replication_bootstrap_group=OFF;
+
+# On Server 2:
+START GROUP_REPLICATION;
+
+Check all the servers super_read_only mode:
+select @@super_read_only;
+
+SELECT * FROM performance_schema.replication_group_members;
+
+
+###########
+# Now we could convert the GR setup to an InnoDB Cluster setup using the MySQL Shell functionality "db.createCluster(... adoptFromGR)":
+# https://dev.mysql.com/doc/refman/8.0/en/mysql-innodb-cluster-from-group-replication.html
+
+

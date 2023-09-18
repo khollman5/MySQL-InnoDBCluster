@@ -1,0 +1,87 @@
+mysql-js> var cluster = dba.getCluster( 'myCluster');
+mysql-js> cluster.status();
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "primary": "10.0.0.11:3306", 
+        "status": "OK_NO_TOLERANCE", 
+        "statusText": "Cluster is NOT tolerant to any failures.", 
+        "topology": {
+            "10.0.0.11:3306": {
+                "address": "10.0.0.11:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }
+        }
+    }
+}
+mysql-js> 
+mysql-js> 
+mysql-js> cluster.addInstance('ic@10.0.0.12:3306');
+A new instance will be added to the InnoDB cluster. Depending on the amount of
+data on the cluster this might take from a few seconds to several hours.
+
+Please provide the password for 'ic@10.0.0.12:3306': 
+Adding instance to the cluster ...
+
+Cluster.addInstance: WARNING: Not running locally on the server and can not access its error log.
+ERROR: 
+Group Replication join failed.
+ERROR: Error joining instance to cluster: '10.0.0.12:3306' - Query failed. 3092 (HY000): The server is not configured properly to be an active member of the group. Please see more details on error log.. Query: START group_replication (RuntimeError)
+mysql-js> dba.verbose=1
+1
+mysql-js> cluster.addInstance('ic@10.0.0.12:3306');
+A new instance will be added to the InnoDB cluster. Depending on the amount of
+data on the cluster this might take from a few seconds to several hours.
+
+Please provide the password for 'ic@10.0.0.12:3306': 
+Adding instance to the cluster ...
+
+=========================== MySQL Provision Output ===========================
+Enter the password for server (ic@10.0.0.12:3306): 
+Enter the password for replication_user (mysql_innodb_cluster_rp429600701): 
+Enter the password for peer_server (ic@10.0.0.11:3306): 
+
+Running join command on '10.0.0.12:3306'.
+Checking Group Replication prerequisites.
+* Comparing options compatibility with Group Replication... PASS
+Server configuration is compliant with the requirements.
+* Comparing options compatibility with the group of the given peer-instance... PASS
+Server configuration is compliant with current group configuration.
+* Checking server version... PASS
+Server is 5.7.19
+
+* Checking that server_id is unique... PASS
+The server_id is valid.
+
+* Checking compatibility of Multi-Threaded Slave settings... PASS
+Multi-Threaded Slave settings are compatible with Group Replication.
+
+The user mysql_innodb_cluster_rp429600701@'%' does not exists on '10.0.0.12:3306' and requires to be created.
+The user ic@'10.0.0.12' does not exists on '10.0.0.12:3306' and requires to be created.
+Successfully granted REPLICATION SLAVE to user: mysql_innodb_cluster_rp429600701@%
+Successfully granted REPLICATION SLAVE to user: mysql_innodb_cluster_rp429600701@localhost
+* Checking user privileges... PASS
+* Checking compliance of existing tables... PASS
+
+WARNING: Not running locally on the server and can not access its error log.
+
+The user ic@'10.0.0.11' does not exists on '10.0.0.11:3306' and requires to be created.
+* Checking user privileges... PASS
+
+Joining Group Replication group: '1a9cbb24-a4f5-11e7-9fc1-080027e5efc5'
+* Running change master command
+Attempting to join to Group Replication group...
+ERROR: 
+Group Replication join failed.
+ERROR: Error joining instance to cluster: '10.0.0.12:3306' - Query failed. 3092 (HY000): The server is not configured properly to be an active member of the group. Please see more details on error log.. Query: START group_replication
+==============================================================================
+Cluster.addInstance: WARNING: Not running locally on the server and can not access its error log.
+ERROR: 
+Group Replication join failed.
+ERROR: Error joining instance to cluster: '10.0.0.12:3306' - Query failed. 3092 (HY000): The server is not configured properly to be an active member of the group. Please see more details on error log.. Query: START group_replication (RuntimeError)
+
+

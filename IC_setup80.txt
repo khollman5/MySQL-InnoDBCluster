@@ -1,0 +1,266 @@
+https://mysqlserverteam.com/mysql-innodb-cluster-8-0-a-hands-on-tutorial/
+https://github.com/wwwted/MySQL-InnoDB-Cluster-3VM-Setup
+https://mysqlmed.wordpress.com/2017/11/09/innodb-cluster-setting-up-production-for-disaster-1-2/ (MySQL 5.7)
+
+###########
+# install
+sudo yum install -y python numactl ncurses-compat-libs
+sudo yum install -y mysql-commercial-*8.0.13*rpm mysql-router-commercial-8.0.12-1.1.el7.x86_64.rpm mysql-shell-commercial-8.0.12-1.1.el7.x86_64.rpm
+sudo yum install -y mysql-commercial-common mysql-commercial-libs mysql-commercial-libs-compat mysql-commercial-client mysql-commercial-server mysql-commercial-backup
+
+
+sudo systemctl start mysqld.service
+sudo systemctl enable mysqld.service
+
+###########
+# remove:
+sudo -i
+systemctl stop mysqld.service
+rm -rf /etc/my.cnf
+rm -rf /var/lib/mysql/*
+rm -rf /var/log/mysqld.log
+rm -rf /opt/mysql/*
+sudo yum remove -y mysql-shell mysql-commercial-common mysql-commercial-libs mysql-commercial-client mysql-commercial-server mysql-router-commercial mysql-community-common  mysql-community-libs mysql-community-libs-compat  mysql-community-client  mysql-community-server mysql-router
+
+###########
+# Disable firewall:
+systemctl disable --now firewalld;
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
+# Centos7 (https://lefred.be/content/mysql-innodb-cluster-automatic-provisioning-firewall-and-selinux/):
+firewall-cmd --zone=public --add-port=3306/tcp --permanent
+firewall-cmd --zone=public --add-port=3306/tcp
+firewall-cmd --zone=public --add-port=33060/tcp --permanent
+firewall-cmd --zone=public --add-port=33060/tcp
+firewall-cmd --zone=public --add-port=33061/tcp --permanent
+firewall-cmd --zone=public --add-port=33061/tcp
+firewall-cmd --zone=public --add-port=33062/tcp --permanent
+firewall-cmd --zone=public --add-port=33062/tcp
+firewall-cmd --zone=public --add-port=6446/tcp --permanent
+firewall-cmd --zone=public --add-port=6446/tcp
+firewall-cmd --zone=public --add-port=6447/tcp --permanent
+firewall-cmd --zone=public --add-port=6447/tcp
+
+# Disable SELinux again:
+setsebool -P mysql_connect_any 1
+netstat -anp | grep 3306
+
+###########
+# Change the root password:
+sudo grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1
+mysql -uroot -p 
+
+SET sql_log_bin = OFF; 
+alter user 'root'@'localhost' identified by 'Oracle20!8';
+create user 'ic'@'%' identified by 'Oracle20!8';
+grant all on *.* to 'ic'@'%' with grant option;
+flush privileges;
+SET sql_log_bin = ON; 
+exit
+
+mysqlsh --uri root@localhost:3306
+Please provide the password for 'root@localhost:3306': **********
+Save password for 'root@localhost:3306'? [Y]es/[N]o/Ne[v]er (default No): y
+
+###########
+# Check that the instances are a good candidates for joing the cluster: (Run commands below for all three instances)
+  dba.checkInstanceConfiguration('ic@ic1:3306');
+
+###########
+# If check instance spots any issues, solve these by running:
+  dba.configureInstance('ic@ic1:3306');
+
+###########
+# Configuration options added by configureInstance ("SET PERSIST") can be found in file: mysqldata/mysqld-auto.cnf You can also view these changes in MySQL by running:
+  \c root@localhost:3306
+  \sql 
+  select * from performance_schema.persisted_variables;
+
+###########
+# To see all variables and their source run:
+  mysql -uroot -e "SELECT * FROM performance_schema.variables_info WHERE variable_source != 'COMPILED';"
+
+###########
+# set persist group_replication_autorejoin_tries=3 ;
+# set persist group_replication_member_expel_timeout=5 ;
+# set persist group_replication_consistency='BEFORE_ON_PRIMARY_FAILOVER' ;
+# set persist group_replication_exit_state_action='OFFLINE_MODE' ;
+# show global variables like 'group_replication%' ;
+
+##########
+# Create Cluster
+#
+# On just one instance, start shell and run:
+
+\connect ic@ic1:3306
+cluster=dba.createCluster("mycluster")
+# cluster=dba.createCluster("mycluster",{ipAllowlist: '11.0.0.0/16'})
+cluster.status()
+cluster.addInstance("ic@ic2:3306")
+# cluster.addInstance("ic@ic2:3306",{ipAllowlist: '11.0.0.0/16'})
+cluster.addInstance("ic@ic3:3306")
+cluster.status();
+
+#cluster = dba.createCluster( 'myCluster', {multiMaster: true} )
+
+###########
+# Using Weighting amongst nodes:
+
+dba.createCluster('mycluster', {memberWeight:35})
+var cluster = dba.getCluster()
+cluster.addInstance('ic@ic2', {memberWeight:25})
+cluster.addInstance('ic@ic3', {memberWeight:50})
+
+
+###########
+# To test ports:
+# Incoming:
+telnet 10.0.0.16 3306
+telnet 10.0.0.16 33060
+telnet 10.0.0.16 33061
+# Outgoing:
+curl portquiz.net:3306
+curl portquiz.net:33060
+curl portquiz.net:33061
+
+
+###########
+# Get status of cluster
+#
+# Connect IDc to a specific MySQL instance using shell:
+  mysqlsh -uic -hic2 -P3306
+
+# And run:
+ cluster = dba.getCluster();
+ cluster.status();
+ cluster.status({extended:true})
+
+# From performance_schema:
+ \sql
+ SELECT * FROM performance_schema.replication_group_members\G
+
+###########
+# OR, from a DevOps perspective:
+#
+# And with a "root@%:3306" account available:
+### This command is optional, but informative. Can be run on all instances
+
+host1: mysqlsh -- dba check-instance-configuration { --port=3306 --host=localhost --user=root }
+host2: mysqlsh -- dba check-instance-configuration { --port=3306 --host=localhost --user=root }
+host3: mysqlsh -- dba check-instance-configuration { --port=3306 --host=localhost --user=root }
+#
+### This command is needed, and should be run on all members
+host1: mysqlsh -- dba configure-instance { --port=3306 --host=localhost --user=root } --clusterAdmin=ic --clusterAdminPassword='Oracle20!8' --restart=true --clearReadOnly=true --interactive=true
+host2: mysqlsh -- dba configure-instance { --port=3306 --host=localhost --user=root } --clusterAdmin=ic --clusterAdminPassword='Oracle20!8' --restart=true --clearReadOnly=true --interactive=true
+host3: mysqlsh -- dba configure-instance { --port=3306 --host=localhost --user=root } --clusterAdmin=ic --clusterAdminPassword='Oracle20!8' --restart=true --clearReadOnly=true --interactive=true
+# Or:
+mysqlsh -- dba configure-instance { --port=3306 --host=localhost --user=ic } --restart=true --clearReadOnly=true --interactive=true
+#
+### This command is essential and bootstraps the clustered setup. By default it becomes the natural ranking Primary member
+host1: mysqlsh ic@ic1:3306 --password='Oracle20!8' -- dba create-cluster myCluster --multiPrimary=false --force=true --memberWeight=80
+host1: mysqlsh ic@ic1:3306 -- cluster status --extended=1
+#
+### The next commands are run for all remaining members to join the cluster
+#
+host1: mysqlsh ic@ic1:3306 -- cluster add-instance ic@ic2:3306 --password='Oracle20!8' --memberWeight=60
+host1: mysqlsh ic@ic1:3306 -- cluster add-instance ic@ic3:3306 --password='Oracle20!8' --memberWeight=60
+#host1: mysqlsh ic@ic1:3306 -- cluster add-instance ic@ic2:3306 --password='Oracle20!8' --memberWeight=60 --recoveryMethod=clone
+#host1: mysqlsh ic@ic1:3306 -- cluster add-instance ic@ic3:3306 --password='Oracle20!8' --memberWeight=60 --recoveryMethod=clone
+
+#
+host1: mysqlsh ic@ic1:3306 -- cluster status
+host1: mysqlsh ic@ic1:3306 -- cluster status --extended=1
+
+###########
+# Want to switch from Multi-Primary to Single-Primary?
+# https://sakthismysqlblog.wordpress.com/2020/01/11/mysql-innodb-cluster-tutorial-3-switching-cluster-mode-and-primary-member/
+#
+
+ select member_host, member_state, member_role from performance_schema.replication_group_members; 
+cluster.switchToSinglePrimaryMode()
+ select member_host, member_state, member_role from performance_schema.replication_group_members; 
+
+# Set a specific node as Master?
+# dba.getCluster()
+cluster.setPrimaryInstance("ic@centos01:3306")
+cluster.setPrimaryInstance("centos03:3306")
+ select member_host, member_state, member_role from performance_schema.replication_group_members; 
+
+# And back again?
+# dba.getCluster()
+cluster.switchToMultiPrimaryMode()
+ select member_host, member_state, member_role from performance_schema.replication_group_members; 
+
+
+###########
+# MySQL Router
+# We will run the MySQL Router process on ic2:
+
+sudo -i
+mkdir -p /opt/mysql/myrouter
+chown -R mysql:mysql /opt/mysql/myrouter
+cd /opt/mysql
+mysqlrouter --bootstrap ic@ic2:3306 -d /opt/mysql/myrouter -u mysql
+
+# Either:
+./myrouter/start.sh 
+# or:
+cp -f /opt/mysql/myrouter/mysqlrouter.conf /etc/mysqlrouter/
+systemctl enable --now mysqlrouter.service
+service mysqlrouter status
+
+
+# On ic1:
+mysql -uic -P6446 -hcentos01 -N -e "select @@hostname, @@port;"
+
+mysql -uic -p -P6446 -hic2 -e "select @@hostname"
+mysql -uic -p -P6446 -hic2 -e "select @@hostname"
+mysql -uic -p -P6446 -hic2 -e "select @@hostname"
+
+mysql -uic -p -P6447 -hic2 -e "select @@hostname"
+mysql -uic -p -P6447 -hic2 -e "select @@hostname"
+mysql -uic -p -P6447 -hic2 -e "select @@hostname"
+
+# On ic3:
+mysql -uic -p -P6446 -hic2 -e "select @@hostname"
+mysql -uic -p -P6446 -hic2 -e "select @@hostname"
+mysql -uic -p -P6446 -hic2 -e "select @@hostname"
+
+mysql -uic -p -P6447 -hic2 -e "select @@hostname"
+mysql -uic -p -P6447 -hic2 -e "select @@hostname"
+mysql -uic -p -P6447 -hic2 -e "select @@hostname"
+
+# On ic2:
+vi  /opt/mysql/myrouter/mysqlrouter.conf
+
+# Be aware of parameters:
+ mysqld.max_connections
+ myrouter.max_connect_errors
+
+
+
+###########
+# Max_connect_errors scenario
+
+for i in `seq 1 99`; do echo 1 |nc ic2 6446 > /dev/null; done
+mysql -uic -poracle -hic2 -P6446 -e "select 1"
+
+2018-09-07 10:35:11 routing INFO [7f0238eba700] [routing:mycluster_default_rw] 99 connection errors for 10.0.0.11 (max 100)
+2018-09-07 10:35:11 routing DEBUG [7f0238eba700] [routing:mycluster_default_rw] fd=9 connection closed (up: 0b; down: 0b) Copy client->server failed: unexpected connection close
+2018-09-07 10:35:11 routing DEBUG [7f023a6bd700] [routing:mycluster_default_rw] fd=9 connection accepted at 0.0.0.0:6446
+2018-09-07 10:35:11 routing DEBUG [7f0238eba700] [routing:mycluster_default_rw] fd=9 connected 10.0.0.11:43000 -> 10.0.0.11:3306 as fd=10
+2018-09-07 10:35:11 routing INFO [7f0238eba700] [routing:mycluster_default_rw] fd=9 Pre-auth socket failure 10.0.0.11: Copy client->server failed: unexpected connection close
+2018-09-07 10:35:11 routing WARNING [7f0238eba700] [routing:mycluster_default_rw] blocking client host 10.0.0.11
+2018-09-07 10:35:11 routing DEBUG [7f0238eba700] [routing:mycluster_default_rw] fd=9 connection closed (up: 113b; down: 0b) Copy client->server failed: unexpected connection close
+2018-09-07 10:35:11 routing DEBUG [7f023a6bd700] [routing:mycluster_default_rw] fd=9 connection accepted at 0.0.0.0:6446
+2018-09-07 10:35:11 routing INFO [7f023a6bd700] Too many connection errors from 10.0.0.11
+
+
+for i in `seq 1 99999`; do echo 1 |nc ic2 6446 > /dev/null; done
+
+grep 'Access denied for user' mysqld.log | wc -l
+100199
+
+2018-09-07T09:06:43.923992Z 5525 [Note] Access denied for user 'ROUTER'@'ic2' (using password: YES)
+2018-09-07T09:15:51.967196Z 106491 [Note] Access denied for user 'ROUTER'@'ic2' (using password: YES)
+
+

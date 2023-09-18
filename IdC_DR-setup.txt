@@ -1,0 +1,167 @@
+
+
+cluster = dba.rebootClusterFromCompleteOutage()
+
+mysqlsh ic@centos02:6446 -- cluster status --extended=1
+
+
+# Multi-primary? Switch to Single Primary:
+
+cluster.switchToSinglePrimaryMode()
+cluster.status()
+
+# Install sw (server, shell & router) on slaves:
+yum install -y mysql-*8.0.20*rpm
+
+# Clone from IdC.
+# https://mysqlserverteam.com/clone-create-mysql-instance-replica/
+#
+# On cluster Primary node:
+
+SET sql_log_bin = OFF; 
+INSTALL PLUGIN CLONE SONAME "mysql_clone.so"; 
+GRANT BACKUP_ADMIN ON *.* to 'ic'@'%';
+GRANT SELECT ON performance_schema.* TO 'ic'@'%';
+GRANT EXECUTE ON *.* to 'ic'@'%';
+SET sql_log_bin = ON; 
+
+# On slaves:
+INSTALL PLUGIN CLONE SONAME "mysql_clone.so"; 
+INSTALL PLUGIN group_replication SONAME 'group_replication.so';
+# Router port won't work for plugin reasons.
+SET GLOBAL clone_valid_donor_list = 'centos02:3306'; 
+#CREATE USER clone_user IDENTIFIED BY "clone_password";
+GRANT CLONE_ADMIN ON *.* to 'ic'@'%';
+# Keep this, if we ever want to clone from any of the slaves
+# GRANT BACKUP_ADMIN ON *.* to 'ic'@'%';
+GRANT SELECT ON performance_schema.* TO 'ic'@'%';
+GRANT EXECUTE ON *.* to 'ic'@'%';
+
+INSTALL PLUGIN CLONE SONAME "mysql_clone.so"; 
+INSTALL PLUGIN group_replication SONAME 'group_replication.so';
+SET GLOBAL clone_valid_donor_list = 'centos02:3306'; 
+GRANT CLONE_ADMIN ON *.* to 'ic'@'%';
+ Keep this, if we ever want to clone from any of the slaves
+ GRANT BACKUP_ADMIN ON *.* to 'ic'@'%';
+GRANT SELECT ON performance_schema.* TO 'ic'@'%';
+GRANT EXECUTE ON *.* to 'ic'@'%';
+
+
+set global log_error_verbosity=3;
+CLONE INSTANCE FROM 'ic'@'centos02':3306 IDENTIFIED BY 'Oracle20!8';
+
+select STATE, ERROR_NO, BINLOG_FILE, BINLOG_POSITION, GTID_EXECUTED,
+CAST(BEGIN_TIME AS DATETIME) as "START TIME",
+CAST(END_TIME AS DATETIME) as "FINISH TIME",
+sys.format_time(POWER(10,12) * (UNIX_TIMESTAMP(END_TIME) - UNIX_TIMESTAMP(BEGIN_TIME)))
+as DURATION
+from performance_schema.clone_status \G
+
+# On one of the slaves, force the server to have a new UUID:
+rm /var/lib/mysql/auto.cnf
+systemctl restart mysqld
+
+# If the slaves aren't in a GR group:
+#UNINSTALL PLUGIN group_replication;
+
+
+mkdir -p /opt/mysql/myrouter
+chown -R mysql:mysql /opt/mysql/myrouter
+mysqlrouter --bootstrap ic@centos02:3306 -d /opt/mysql/myrouter -u mysql
+cd /opt/mysql/myrouter
+./start.sh
+
+# Check connectivity:
+mysql -uic -P6446 -h olslave01 -e "select @@hostname"
+mysql -uic -P6446 -h centos02 -e "select @@hostname"
+
+
+# Replication config for slaves:
+# my.cnf:
+server-id			=11
+log-bin                         =olslave01
+gtid-mode                       =ON
+enforce-gtid-consistency        =TRUE
+
+server-id			=22
+log-bin                         =olslave02
+gtid-mode                       =ON
+enforce-gtid-consistency        =TRUE
+
+
+# Setting up replication slaves: 
+CHANGE MASTER TO
+     MASTER_HOST = 'olslave01',
+     MASTER_PORT = 6446,
+     MASTER_USER = 'ic',
+     MASTER_PASSWORD = 'Oracle20!8',
+     MASTER_AUTO_POSITION = 1
+     FOR CHANNEL 'idc_gr_replication' ;
+
+start slave ;
+show slave status for channel 'idc_gr_replication'\G
+
+
+# Start basic Router on olslave01:
+#  In this example, I'll be using 2x Router processes on olslave01 & centos02.
+#  Both routers will have the same config, whereby:
+#   - Access to the GR slaves via: centos01:7001 & olslave01:7001
+#   - Access to the IdC cluster via: centos01:6446 & olslave01:6446
+# 
+
+mkdir -p /opt/mysql/myrouter
+chown -R mysql:mysql /opt/mysql/myrouter
+cd /opt/mysql/myrouter
+
+# Add the following to both olslave01 router as well as centos02:
+vi mysqlrouter.conf
+
+ [routing:DR_rw]
+ bind_address=0.0.0.0
+ bind_port=7001
+ destinations=olslave01:3306,olslave02:3306
+ routing_strategy=first-available
+ protocol=classic
+
+./stop.sh
+./start.sh
+
+mysql -uic -P7001 -h olslave01 -e "select @@hostname"
+mysql -uic -P6446 -h centos02 -e "select @@hostname"
+
+#
+# High level Router:
+#
+# On another server
+vi mysqlrouter.conf:
+
+[routing:Master_rw]
+bind_address=0.0.0.0
+bind_port=8008
+destinations=centos02:6446,olslave01:6446
+routing_strategy=first-available
+protocol=classic
+
+[routing:DR_rw]
+bind_address=0.0.0.0
+bind_port=8009
+destinations=centos02:7001,olslave01:7001
+routing_strategy=first-available
+protocol=classic
+
+mysqlrouter --user=mysql --config /opt/mysql/myrouter/mysqlrouter.conf &
+
+# To test connectivity options:
+pkill mysqlrouter
+vi mysqlrouter.conf:
+ ..
+ bind_port=8008
+ ..
+ routing_strategy=round-robin
+ ..
+
+
+mysql -uic -h centos03 -P8008 -e 'select @@hostname; select @@port'
+mysql -uic -h centos03 -P8008 -e 'select @@hostname; select @@port'
+
+

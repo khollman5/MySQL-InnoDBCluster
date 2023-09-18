@@ -1,0 +1,151 @@
+systemctl start mysqld.service
+systemctl enable mysqld.service
+
+sudo grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1
+
+mysql -uroot -p 
+
+SET sql_log_bin = OFF; 
+alter user 'root'@'localhost' identified by 'Oracle20!8';
+create user 'ic'@'%' identified by 'Oracle20!8';
+grant all on *.* to 'ic'@'%' with grant option;
+flush privileges;
+SET sql_log_bin = ON; 
+exit
+
+mysqlsh --uri root@localhost:3306
+
+dba.checkInstanceConfiguration('ic@kh01:3306')
+dba.configureInstance('ic@kh01:3306')
+
+You can also view these changes in MySQL by running:
+  \sql 
+  select * from performance_schema.persisted_variables;
+To see all variables and their source run:
+  SELECT * FROM performance_schema.variables_info WHERE variable_source != 'COMPILED';
+
+
+Create Cluster
+
+ \js
+
+On just one instance, start shell and run:
+
+ \connect ic@kh01:3306
+
+ cluster = dba.createCluster( 'myCluster', {multiMaster: true} )
+
+ cluster.status()
+
+
+ cluster.addInstance("ic@kh02:3306")
+ cluster.addInstance("ic@kh03:3306")
+ cluster.status()
+ cluster.status({extended:true})
+
+
+Get status of cluster from another server
+
+Connect IDc to a specific MySQL instance using shell:
+  mysqlsh -uic -hkh02 -P3306
+
+And run:
+ cluster = dba.getCluster()
+ cluster.status()
+ cluster.status({extended:true})
+
+
+# MySQL Router
+# We will run the MySQL Router process on kh02:
+
+sudo -i
+mkdir -p /opt/mysql/myrouter
+chown -R mysql:mysql /opt/mysql/myrouter
+cd /opt/mysql
+mysqlrouter --bootstrap ic@kh02:3306 -d /opt/mysql/myrouter -u mysql
+./myrouter/start.sh 
+
+# On kh01:
+mysql -uic -p -P6446 -hkh02 -e "select @@hostname"
+mysql -uic -p -P6446 -hkh02 -e "select @@hostname"
+mysql -uic -p -P6446 -hkh02 -e "select @@hostname"
+
+mysql -uic -p -P6447 -hkh02 -e "select @@hostname"
+mysql -uic -p -P6447 -hkh02 -e "select @@hostname"
+mysql -uic -p -P6447 -hkh02 -e "select @@hostname"
+
+# On kh03:
+mysql -uic -p -P6446 -hkh02 -e "select @@hostname"
+mysql -uic -p -P6446 -hkh02 -e "select @@hostname"
+mysql -uic -p -P6446 -hkh02 -e "select @@hostname"
+
+mysql -uic -p -P6447 -hkh02 -e "select @@hostname"
+mysql -uic -p -P6447 -hkh02 -e "select @@hostname"
+mysql -uic -p -P6447 -hkh02 -e "select @@hostname"
+
+
+cd /mnt/khsw/
+ls -lrt restaurants_mongo.json
+
+mysqlsh --uri root@kh02:64460
+
+###############################################
+# Importing a "table" instead of a Collection:
+
+db
+\use nexus
+util.importJson("/mnt/khsw/restaurants_mongo.json", {schema: "nexus", table: "restaurants", convertBsonOid: true});
+
+db.getCollections()
+
+#####################
+# SQL in \js mode:
+
+session.sql("show tables")
+
+session.sql("show tables")
+session.sql("show create table replicant")
+session.sql("show create table restaurants")
+
+##################################
+# Import the collection properly:
+
+session.sql("drop table restaurants")
+util.importJson("/mnt/khsw/restaurants_mongo.json", {schema: "nexus", collection: "restaurants", convertBsonOid: true});
+
+session.sql("show tables")
+db.getCollections()
+
+
+db.restaurants.find("location.type = 'Point'").limit(10)
+
+#####################
+# JSON_CONTAINS_PATH
+
+INSERT INTO restaurants (doc) VALUES ('{"_id": "1234", "name": "Daz Restaurant", "cuisine": "West Indian", "restaurant_id": "4321"}');
+
+SELECT count(*), JSON_CONTAINS_PATH(doc, 'one', '$.cuisine') cuisine  FROM restaurants  GROUP BY cuisine;
+
+
+#####################
+# Document sizes in bytes:
+SELECT max(JSON_STORAGE_SIZE(doc)) max, avg(JSON_STORAGE_SIZE(doc)) avg, min(JSON_STORAGE_SIZE(doc)) min FROM restaurants;
+
+
+#####################
+# Using SQL on JSON:
+
+SELECT doc->>"$.name" 
+FROM restaurants 
+WHERE JSON_CONTAINS(doc, '"West Indian"', '$.cuisine') ;
+
+#####################
+# Running SQL to convert to JSON object format:
+SELECT JSON_OBJECT("Name", doc->>"$.name") FROM restaurants  WHERE JSON_CONTAINS(doc, '"West Indian"', '$.cuisine') ;
+
+####################
+# Converting JSON to Relational, handling Nulls:
+
+SELECT name, cuisine, borough FROM restaurants,JSON_TABLE(doc, "$" COLUMNS (name char(100) PATH "$.name", cuisine char(100) PATH "$.cuisine", borough char(100) PATH "$.borough" DEFAULT '"<UNKNOWN>"' ON EMPTY)) AS jst LIMIT 2;
+
+

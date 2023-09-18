@@ -1,0 +1,94 @@
+5.7.19 (shell 1.0.9 & 1.0.10 both give same error)
+5.7.18 (shell 1.0.10)
+
+mysql-js> cluster.addInstance('ic@10.0.0.13:3306');
+A new instance will be added to the InnoDB cluster. Depending on the amount of
+data on the cluster this might take from a few seconds to several hours.
+
+Please provide the password for 'ic@10.0.0.13:3306': 
+Adding instance to the cluster ...
+
+Cluster.addInstance: WARNING: Not running locally on the server and can not access its error log.
+ERROR: 
+Group Replication join failed.
+ERROR: Error joining instance to cluster: '10.0.0.13@3306' - Query failed. 3092 (HY000): The server is not configured properly to be an active member of the group. Please see more details on error log.. Query: START group_replication (RuntimeError)
+
+
+##############
+# mysqld.log from 10.0.0.13:
+
+2017-09-28T15:20:06.391268Z 8 [ERROR] Plugin group_replication reported: 'The group name option is mandatory'
+2017-09-28T15:20:06.391321Z 8 [ERROR] Plugin group_replication reported: 'Unable to start Group Replication on boot'
+2017-09-28T15:20:06.439811Z 8 [Warning] Neither --relay-log nor --relay-log-index were used; so replication may break when this MySQL server acts as a slave and has his hostname changed!! Please use '--relay-log=gr3-relay-bin' to avoid this problem.
+2017-09-28T15:20:06.443557Z 8 [Note] 'CHANGE MASTER TO FOR CHANNEL 'group_replication_recovery' executed'. Previous state master_host='', master_port= 3306, master_log_file='', master_log_pos= 4, master_bind=''. New state master_host='', master_port= 3306, master_log_file='', master_log_pos= 4, master_bind=''.
+2017-09-28T15:20:06.450699Z 8 [Note] Plugin group_replication reported: 'Group communication SSL configuration: group_replication_ssl_mode: "REQUIRED"; server_key_file: "server-key.pem"; server_cert_file: "server-cert.pem"; client_key_file: "server-key.pem"; client_cert_file: "server-cert.pem"; ca_file: "ca.pem"; ca_path: ""; cipher: ""; tls_version: "TLSv1,TLSv1.1,TLSv1.2"; crl_file: ""; crl_path: ""'
+2017-09-28T15:20:06.450983Z 8 [Note] Plugin group_replication reported: '[GCS] Added automatically IP ranges 10.0.0.13/24,10.0.2.15/24,127.0.0.1/8 to the whitelist'
+2017-09-28T15:20:06.451658Z 0 [Note] Plugin group_replication reported: 'Configuring SSL for the server'
+2017-09-28T15:20:06.451748Z 0 [Note] Plugin group_replication reported: 'Initializing SSL with key_file: 'server-key.pem'  cert_file: 'server-cert.pem'  ca_file: 'ca.pem'  ca_path: 'NULL''
+2017-09-28T15:20:06.451756Z 0 [Note] Plugin group_replication reported: 'Additional SSL configuration is cipher: '' crl_file: 'NULL' crl_path: 'NULL''
+2017-09-28T15:20:06.452444Z 0 [Note] Plugin group_replication reported: 'Success initializing SSL'
+2017-09-28T15:20:06.452485Z 0 [Note] Plugin group_replication reported: 'Configuring SSL for the client'
+2017-09-28T15:20:06.452586Z 0 [Note] Plugin group_replication reported: 'Initializing SSL with key_file: 'server-key.pem'  cert_file: 'server-cert.pem'  ca_file: 'ca.pem'  ca_path: 'NULL''
+2017-09-28T15:20:06.452611Z 0 [Note] Plugin group_replication reported: 'Additional SSL configuration is cipher: '' crl_file: 'NULL' crl_path: 'NULL''
+2017-09-28T15:20:06.452994Z 0 [Note] Plugin group_replication reported: 'Success initializing SSL'
+2017-09-28T15:20:06.453108Z 8 [Note] Plugin group_replication reported: 'Initialized group communication with configuration: group_replication_group_name: "ce56ae7d-a45e-11e7-92d9-0800274af79e"; group_replication_local_address: "10.0.0.13:13306"; group_replication_group_seeds: "10.0.0.11:13306"; group_replication_bootstrap_group: false; group_replication_poll_spin_loops: 0; group_replication_compression_threshold: 1000000; group_replication_ip_whitelist: "AUTOMATIC"'
+2017-09-28T15:20:06.460296Z 10 [Note] 'CHANGE MASTER TO FOR CHANNEL 'group_replication_applier' executed'. Previous state master_host='', master_port= 3306, master_log_file='', master_log_pos= 4, master_bind=''. New state master_host='<NULL>', master_port= 0, master_log_file='', master_log_pos= 4, master_bind=''.
+2017-09-28T15:20:06.468107Z 13 [Note] Slave SQL thread for channel 'group_replication_applier' initialized, starting replication in log 'FIRST' at position 0, relay log './gr3-relay-bin-group_replication_applier.000001' position: 4
+2017-09-28T15:20:06.468586Z 8 [Note] Plugin group_replication reported: 'Group Replication applier module successfully initialized!'
+2017-09-28T15:20:06.468605Z 8 [Note] Plugin group_replication reported: 'auto_increment_increment is set to 7'
+2017-09-28T15:20:06.468608Z 8 [Note] Plugin group_replication reported: 'auto_increment_offset is set to 577364281'
+2017-09-28T15:20:06.469111Z 0 [Note] Plugin group_replication reported: 'state 0 action xa_init'
+2017-09-28T15:20:06.487041Z 0 [Note] Plugin group_replication reported: 'Successfully bound to 0.0.0.0:13306 (socket=87).'
+2017-09-28T15:20:06.487081Z 0 [Note] Plugin group_replication reported: 'Successfully set listen backlog to 32 (socket=87)!'
+2017-09-28T15:20:06.487085Z 0 [Note] Plugin group_replication reported: 'Successfully unblocked socket (socket=87)!'
+2017-09-28T15:20:06.487108Z 0 [Note] Plugin group_replication reported: 'Ready to accept incoming connections on 0.0.0.0:13306 (socket=87)!'
+2017-09-28T15:20:06.487406Z 0 [Note] Plugin group_replication reported: 'connecting to 10.0.0.13 13306'
+2017-09-28T15:20:06.487752Z 0 [Note] Plugin group_replication reported: 'client connected to 10.0.0.13 13306 fd 88'
+2017-09-28T15:20:06.487786Z 0 [Note] Plugin group_replication reported: 'Trying to connect using SSL.'
+2017-09-28T15:20:06.543009Z 0 [Note] Plugin group_replication reported: 'Success connecting using SSL.'
+2017-09-28T15:20:06.543925Z 0 [Note] Plugin group_replication reported: 'connecting to 10.0.0.13 13306'
+2017-09-28T15:20:06.544022Z 0 [Note] Plugin group_replication reported: 'client connected to 10.0.0.13 13306 fd 85'
+2017-09-28T15:20:06.544049Z 0 [Note] Plugin group_replication reported: 'Trying to connect using SSL.'
+2017-09-28T15:20:06.599546Z 0 [Note] Plugin group_replication reported: 'Success connecting using SSL.'
+2017-09-28T15:20:06.600137Z 0 [Note] Plugin group_replication reported: 'connecting to 10.0.0.13 13306'
+2017-09-28T15:20:06.600222Z 0 [Note] Plugin group_replication reported: 'client connected to 10.0.0.13 13306 fd 91'
+2017-09-28T15:20:06.600238Z 0 [Note] Plugin group_replication reported: 'Trying to connect using SSL.'
+2017-09-28T15:20:06.655907Z 0 [Note] Plugin group_replication reported: 'Success connecting using SSL.'
+2017-09-28T15:20:06.656366Z 0 [Note] Plugin group_replication reported: 'connecting to 10.0.0.13 13306'
+2017-09-28T15:20:06.656465Z 0 [Note] Plugin group_replication reported: 'client connected to 10.0.0.13 13306 fd 93'
+2017-09-28T15:20:06.656479Z 0 [Note] Plugin group_replication reported: 'Trying to connect using SSL.'
+2017-09-28T15:20:06.711881Z 0 [Note] Plugin group_replication reported: 'Success connecting using SSL.'
+2017-09-28T15:20:06.712479Z 0 [Note] Plugin group_replication reported: 'connecting to 10.0.0.13 13306'
+2017-09-28T15:20:06.712571Z 0 [Note] Plugin group_replication reported: 'client connected to 10.0.0.13 13306 fd 95'
+2017-09-28T15:20:06.712586Z 0 [Note] Plugin group_replication reported: 'Trying to connect using SSL.'
+2017-09-28T15:20:06.768088Z 0 [Note] Plugin group_replication reported: 'Success connecting using SSL.'
+2017-09-28T15:20:06.768628Z 0 [Note] Plugin group_replication reported: 'connecting to 10.0.0.13 13306'
+2017-09-28T15:20:06.768770Z 0 [Note] Plugin group_replication reported: 'client connected to 10.0.0.13 13306 fd 97'
+2017-09-28T15:20:06.768785Z 0 [Note] Plugin group_replication reported: 'Trying to connect using SSL.'
+2017-09-28T15:20:06.824400Z 0 [Note] Plugin group_replication reported: 'Success connecting using SSL.'
+2017-09-28T15:20:06.824921Z 0 [Note] Plugin group_replication reported: 'connecting to 10.0.0.11 13306'
+2017-09-28T15:20:06.825352Z 0 [Note] Plugin group_replication reported: 'client connected to 10.0.0.11 13306 fd 99'
+2017-09-28T15:20:06.825387Z 0 [Note] Plugin group_replication reported: 'Trying to connect using SSL.'
+2017-09-28T15:20:06.885193Z 0 [Note] Plugin group_replication reported: 'Success connecting using SSL.'
+2017-09-28T15:20:07.963020Z 0 [Note] Plugin group_replication reported: 'state 4272 action xa_snapshot'
+2017-09-28T15:20:07.964463Z 0 [Note] Plugin group_replication reported: 'new state x_recover'
+2017-09-28T15:20:07.964511Z 0 [Note] Plugin group_replication reported: 'state 4292 action xa_complete'
+2017-09-28T15:20:07.964839Z 0 [Note] Plugin group_replication reported: 'new state x_run'
+2017-09-28T15:20:12.428796Z 0 [ERROR] Plugin group_replication reported: 'This member has more executed transactions than those present in the group. Local transactions: 0a312d6c-a45e-11e7-9133-0800274af79e:1 > Group transactions: 0ac8565e-a45e-11e7-8e0a-0800274af79e:1-12,
+ce56ae7d-a45e-11e7-92d9-0800274af79e:1-9'
+2017-09-28T15:20:12.428911Z 0 [ERROR] Plugin group_replication reported: 'The member contains transactions not present in the group. The member will now exit the group.'
+2017-09-28T15:20:12.428926Z 0 [Note] Plugin group_replication reported: 'To force this member into the group you can use the group_replication_allow_local_disjoint_gtids_join option'
+2017-09-28T15:20:13.429526Z 8 [Note] Plugin group_replication reported: 'Going to wait for view modification'
+2017-09-28T15:20:13.433231Z 0 [Note] Plugin group_replication reported: 'getstart group_id 8da193f6'
+2017-09-28T15:20:17.063833Z 0 [Note] Plugin group_replication reported: 'state 4345 action xa_terminate'
+2017-09-28T15:20:17.065071Z 0 [Note] Plugin group_replication reported: 'new state x_start'
+2017-09-28T15:20:17.065135Z 0 [Note] Plugin group_replication reported: 'state 4272 action xa_exit'
+2017-09-28T15:20:17.065856Z 0 [Note] Plugin group_replication reported: 'Exiting xcom thread'
+2017-09-28T15:20:17.065890Z 0 [Note] Plugin group_replication reported: 'new state x_start'
+2017-09-28T15:20:22.100311Z 0 [Note] Plugin group_replication reported: 'Destroying SSL'
+2017-09-28T15:20:22.108382Z 0 [Note] Plugin group_replication reported: 'Success destroying SSL'
+2017-09-28T15:20:22.109043Z 8 [Note] Plugin group_replication reported: 'auto_increment_increment is reset to 1'
+2017-09-28T15:20:22.109088Z 8 [Note] Plugin group_replication reported: 'auto_increment_offset is reset to 1'
+2017-09-28T15:20:22.109417Z 13 [Note] Error reading relay log event for channel 'group_replication_applier': slave SQL thread was killed
+2017-09-28T15:20:22.113061Z 10 [Note] Plugin group_replication reported: 'The group replication applier thread was killed'
+

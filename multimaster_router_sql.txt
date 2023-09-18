@@ -1,0 +1,91 @@
+
+
+sudo yum remove mysql-router mysql-shell mysql-community-common mysql-community-libs mysql-community-client mysql-community-server mysql-community-libs-5.7.18-1.el7.x86_64.rpm mysql-community-common-5.7.18-1.el7.x86_64.rpm mysql-shell-1.0.9-1.el7.x86_64.rpm
+
+
+sudo yum install mysql-router-2.1.3-1.el7.x86_64.rpm  mysql-community-client-5.7.18-1.el7.x86_64.rpm  mysql-community-libs-5.7.18-1.el7.x86_64.rpm mysql-community-common-5.7.18-1.el7.x86_64.rpm mysql-shell-1.0.9-1.el7.x86_64.rpm
+
+
+@ ap1:
+sudo mysqlrouter --bootstrap ic@gr1:3306 --directory myrouter1 --user=vagrant --force
+@ ap2:
+sudo mysqlrouter --bootstrap ic@gr2:3306 --directory myrouter2 --user=vagrant --force
+
+
+mysql -uic -poracle -P6446  -hap1 -e "select @@hostname"
+mysql -uic -poracle -P6446  -hap2 -e "select @@hostname"
+
+	@ap1 & @ap2
+	-bash-4.2$ mysql -uic -poracle -P6446  -hap2 -e "select @@hostname"
+	mysql: [Warning] Using a password on the command line interface can be insecure.
+	+------------+
+	| @@hostname |
+	+------------+
+	| gr1        |
+	+------------+
+	-bash-4.2$ mysql -uic -poracle -P6446  -hap2 -e "select @@hostname"
+	mysql: [Warning] Using a password on the command line interface can be insecure.
+	+------------+
+	| @@hostname |
+	+------------+
+	| gr2        |
+	+------------+
+	-bash-4.2$ mysql -uic -poracle -P6446  -hap2 -e "select @@hostname"
+	mysql: [Warning] Using a password on the command line interface can be insecure.
+	+------------+
+	| @@hostname |
+	+------------+
+	| gr3        |
+	+------------+
+
+
+###########
+# Double check amount of "mysq_routerXX_...." users created in mysql.user table vs what appears in "myrouter/mysqlrouter.conf":
+
+# @ap1
+cat  myrouter/mysqlrouter.conf
+	..
+	[metadata_cache:myCluster]
+	router_id=3
+	bootstrap_server_addresses=mysql://10.0.0.11:3306,mysql://10.0.0.12:3306,mysql://10.0.0.13:3306
+	user=mysql_router3_bebrm3si9dqk
+	..
+@ap2
+	..
+	user=mysql_router3_bebrm3si9dqk
+	..
+
+mysql-sql> select user, host from mysql.user;
++----------------------------------+-----------+
+| user                             | host      |
++----------------------------------+-----------+
+| ic                               | %         |
+| mysql_innodb_cluster_rp429708529 | %         |
+| mysql_innodb_cluster_rp429713836 | %         |
+| mysql_innodb_cluster_rp429716718 | %         |
+| mysql_router10_4qytce44cgt6      | %         |
+| mysql_router10_8ihobphhkxhl      | %         |
+| mysql_router24_4gmj5961564n      | %         |
+| mysql_router31_vff1or7j1gzd      | %         |
+| mysql_router3_9z00abzbqk21       | %         |
+| mysql_router3_bebrm3si9dqk       | %         |
+| mysql_router3_o9aosbyy78bl       | %         |
+| _gr_user                         | localhost |
+| mysql.sys                        | localhost |
+| mysql_innodb_cluster_rp429716718 | localhost |
+| root                             | localhost |
++----------------------------------+-----------+
+15 rows in set (0.00 sec)
+
+
+###########
+# After an instance outage and rejoin, myrouter needs its metadata refreshed:
+
+SELECT now(), MEMBER_PORT FROM
+ performance_schema.replication_group_members WHERE MEMBER_ID =
+               (SELECT VARIABLE_VALUE from
+                performance_schema.global_status
+                WHERE
+		VARIABLE_NAME='group_replication_primary_member');
+
+

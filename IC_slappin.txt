@@ -1,0 +1,143 @@
+
+mysqlslap --user=root --password=oracle --number-of-queries=20000 --iterations=10 --concurrency=4000 --delimiter="\n" --create-schema=nexus --query="ins_slap.sql" --verbose
+
+mysqlslap --user=root --password=oracle --number-of-queries=20000 --iterations=10 --concurrency=5000 --delimiter="\n" --create-schema=nexus --query="ins_slap.sql" --verbose
+
+mysqlslap --user=root --password=oracle --number-of-queries=20000 --iterations=10 --concurrency=6000 --delimiter="\n" --create-schema=nexus --query="ins_slap.sql" --verbose
+
+
+create database nexus;
+create table nexus.replicant (
+id INT(11) NOT NULL AUTO_INCREMENT ,
+`First name` varchar(40) not null default '',
+`Last name` varchar(40) not null default '',
+`Replicant` enum('Yes','No') not null default 'Yes',
+PRIMARY KEY (id)
+) engine=InnoDB row_format=COMPACT;
+INSERT INTO nexus.`replicant` (`First name`,`Last name`,`Replicant`)
+VALUES 
+('Roy','Hauer','Yes'),
+('Rutger','Batty','Yes'),
+('Voight','Kampff','Yes'),
+('Pris','Hannah','Yes'),
+('Daryl','Stratton','Yes'),
+('Rachael','Young','Yes'),
+('Sean','Tyrell','Yes'),
+('Rick','Ford','No'),
+('Harrison','Deckard','Yes');
+
+
+set global max_connections=100000;
+
+
+mysqlslap --user=root --password=oracle --number-of-queries=2000 --iterations=10 --concurrency=400 --delimiter="\n" --create-schema=nexus --query="ins_slap.sql" --verbose
+
+
+
+Benchmark
+	Average number of seconds to run all queries: 1.262 seconds
+	Minimum number of seconds to run all queries: 1.049 seconds
+	Maximum number of seconds to run all queries: 1.643 seconds
+	Number of clients running queries: 400
+	Average number of queries per client: 5
+
+mysqlslap --user=root --password=oracle --number-of-queries=2000 --iterations=10 --concurrency=900 --delimiter="\n" --create-schema=nexus --query="ins_slap.sql" --verbose
+mysqlslap: [Warning] Using a password on the command line interface can be insecure.
+Benchmark
+	Average number of seconds to run all queries: 2.126 seconds
+	Minimum number of seconds to run all queries: 1.566 seconds
+	Maximum number of seconds to run all queries: 3.776 seconds
+	Number of clients running queries: 900
+	Average number of queries per client: 2
+
+
+mysqlslap --user=root --password=oracle --number-of-queries=2000 --iterations=100 --concurrency=900 --delimiter="\n" --create-schema=nexus --query="ins_slap.sql" --verbose
+mysqlslap: [Warning] Using a password on the command line interface can be insecure.
+
+
+Benchmark
+	Average number of seconds to run all queries: 2.558 seconds
+	Minimum number of seconds to run all queries: 1.362 seconds
+	Maximum number of seconds to run all queries: 7.648 seconds
+	Number of clients running queries: 900
+	Average number of queries per client: 2
+
+
+mysqlslap --user=root --password=oracle --auto-generate-sql-write-number=10000 --number-of-queries=2000 --iterations=100 --concurrency=900 --delimiter="\n" --create-schema=nexus --query="ins_slap.sql" --verbose
+
+mysqlslap: [Warning] Using a password on the command line interface can be insecure.
+mysqlslap: Cannot run query INSERT INTO `replicant` (`First name`,`Last name`,`Replicant`)
+VALUES 
+('H','M','Yes'), ('G','K','Yes');
+ ERROR : Lost connection to MySQL server during query
+mysqlslap: Cannot run query INSERT INTO `replicant` (`First name`,`Last name`,`Replicant`)
+VALUES 
+('H','M','Yes'), ('G','K','Yes');
+ ERROR : Lost connection to MySQL server during query
+mysqlslap: Cannot run query INSERT INTO `replicant` (`First name`,`Last name`,`Replicant`)
+VALUES 
+('H','M','Yes'), ('G','K','Yes');
+ ERROR : Lost connection to MySQL server during query
+mysqlslap: Cannot run query INSERT INTO `replicant` (`First name`,`Last name`,`Replicant`)
+VALUES 
+('H','M','Yes'), ('G','K','Yes');
+ ERROR : Lost connection to MySQL server during query
+
+
+
+There are also two configuration options related to this at their disposal today (I hope that they're using 5.7.19 or 5.7.20):
+1. https://dev.mysql.com/doc/refman/5.7/en/group-replication-options.html#sysvar_group_replication_transaction_size_limit
+group_replication_transaction_size_limit = 10485760
+2. https://dev.mysql.com/doc/refman/5.7/en/group-replication-options.html#sysvar_group_replication_compression_threshold 
+group_replication_compression_threshold = 10240
+
+group_replication_flow_control_certifier_threshold = 25000000
+group_replication_flow_control_applier_threshold = 25000000
+
+
+mysqlslap --user=root --password=oracle --auto-generate-sql-write-number=10000 --number-of-queries=2000 --iterations=100 --concurrency=900 --delimiter="\n" --create-schema=nexus --query="ins_slap.sql" --verbose
+mysqlslap: [Warning] Using a password on the command line interface can be insecure.
+
+
+^[[ABenchmark
+	Average number of seconds to run all queries: 2.512 seconds
+	Minimum number of seconds to run all queries: 1.420 seconds
+	Maximum number of seconds to run all queries: 8.710 seconds
+	Number of clients running queries: 900
+	Average number of queries per client: 2
+
+
+mysqlslap --user=root --password=oracle --auto-generate-sql-write-number=50000 --number-of-queries=2000 --iterations=1000 --concurrency=1000 --delimiter="\n" --create-schema=nexus --query="ins_slap.sql" --verbose 
+
+mysqlslap: Cannot run query INSERT INTO `replicant` (`First name`,`Last name`,`Replicant`)
+VALUES 
+('H','M','Yes'), ('G','K','Yes');
+ ERROR : Plugin instructed the server to rollback the current transaction.
+
+
+vi /etc/my.cnf
+plugin-load-add=thread_pool=thread_pool.so
+plugin-load-add=tp_thread_state=thread_pool.so
+plugin-load-add=tp_thread_group_state=thread_pool.so
+plugin-load-add=tp_thread_group_stats=thread_pool.so
+
+
+# thread_pool max trans size 6secs.
+thread_pool_stall_limit=600
+thread_pool_size=36
+
+
+mysqlslap --user=root --password=oracle --auto-generate-sql-write-number=50000 --number-of-queries=2000 --iterations=1000 --concurrency=1000 --delimiter="\n" --create-schema=nexus --query="ins_slap.sql" --verbose
+mysqlslap: [Warning] Using a password on the command line interface can be insecure.
+
+
+
+Benchmark
+	Average number of seconds to run all queries: 4.379 seconds
+	Minimum number of seconds to run all queries: 1.173 seconds
+	Maximum number of seconds to run all queries: 12.567 seconds
+	Number of clients running queries: 1000
+	Average number of queries per client: 2
+
+
+

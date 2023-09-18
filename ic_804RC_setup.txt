@@ -1,0 +1,97 @@
+# just in case, removal:
+sudo systemctl stop mysqld.service
+rm -rf /etc/my.cnf
+rm -rf /var/lib/mysql/*
+rm -rf /var/log/mysqld.log
+sudo yum remove -y mysql-router mysql-shell mysql-community-common mysql-community-libs mysql-community-client mysql-community-server
+sudo yum remove -y mysql-router-commercial mysql-shell-commercial mysql-commercial-common mysql-commercial-libs mysql-commercial-client mysql-commercial-server
+
+yum install -y mysql-commu*8.0.4*rpm mysql-shell-8.0.4-0.1.rc.el7.x86_64.rpm mysql-router-8.0.4-0.1.rc.el7.x86_64.rpm
+
+
+sudo systemctl start mysqld.service
+sudo systemctl enable mysqld.service
+
+sudo vi + /etc/my.cnf
+# insert the following at the end, to avoid having to create complex passwords:
+..
+..
+validate-password=OFF
+
+# Then restart mysql:
+sudo systemctl restart mysqld.service
+
+# Change the root password:
+sudo grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1
+mysql -uroot -p 
+
+SET sql_log_bin = OFF; 
+alter user 'root'@'localhost' identified by 'oracle';
+alter user 'root'@'localhost' identified by 'Orac1e20!8';
+SET sql_log_bin = ON; 
+exit
+
+sudo -i
+mysqlsh
+
+dba.configureLocalInstance()
+
+systemctl restart mysqld.service
+
+# on ic1:
+mysqlsh
+ dba.checkInstanceConfiguration('ic:Orac1e20!8@ic1:3306')
+# on ic2:
+mysqlsh
+ dba.checkInstanceConfiguration('ic:Orac1e20!8@ic2:3306')
+# on ic3:
+mysqlsh
+ dba.checkInstanceConfiguration('ic:Orac1e20!8@ic3:3306')
+
+
+# On just one server, doesn't matter which:
+mysqlsh --uri ic:Oracle20!8@ic2:3306
+# or
+/c ic:Oracle20!8@10.0.0.12:3306
+
+cluster.status();
+cluster.addInstance('ic:Oracle20!8@ic1:3306')
+cluster.addInstance('ic:Oracle20!8@ic3:3306')
+cluster.status();
+
+# Locally on each server:
+# ic2
+mysqlsh 
+ dba.configureLocalInstance('ic:Orac1e20!8@ic2:3306')
+# ic1 
+# Say Y to when it asks you to override SUPER READ ONLY mode, otherwise no changes will occur.
+mysqlsh 
+ dba.configureLocalInstance('ic:Orac1e20!8@ic1:3306')
+# ic3
+# Say Y to when it asks you to override SUPER READ ONLY mode, otherwise no changes will occur.
+mysqlsh 
+ dba.configureLocalInstance('ic:Orac1e20!8@ic3:3306')
+
+
+
+sudo mkdir /opt/mysql/router
+chown -R mysql:mysql /opt/mysql/router
+#mysqlrouter --bootstrap ic:Orac1e20!8@10.0.0.12:3306 --directory /opt/mysql/router --user=mysql 
+mysqlrouter --bootstrap ic@10.0.0.12:3306 --directory /opt/mysql/router --user=mysql
+/opt/mysql/router/start.sh
+
+
+
+mysql -uic -p -P6446  -hic1 -e "select @@hostname"
+mysql -uic -p -P6446  -hic1 -e "select @@hostname"
+mysql -uic -p -P6446  -hic1 -e "select @@hostname"
+
+# Remember, there are only 2 READ-ONLY servers.
+mysql -uic -p -P6447  -hic1 -e "select @@hostname"
+mysql -uic -p -P6447  -hic1 -e "select @@hostname"
+mysql -uic -p -P6447  -hic1 -e "select @@hostname"
+
+
+
+destinations=metadata-cache://myCluster/default?role=PRIMARY,state=ONLINE
+

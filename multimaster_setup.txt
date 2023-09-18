@@ -1,0 +1,357 @@
+# python is a must:
+sudo yum install python
+
+# numactl is needed:
+sudo yum install numactl
+
+
+# Install:
+sudo yum install *.rpm 
+
+sudo yum install -y mysql-commercial-common-5.7.19-1.1.el7.x86_64.rpm mysql-commercial-client-5.7.19-1.1.el7.x86_64.rpm mysql-commercial-libs-5.7.19-1.1.el7.x86_64.rpm mysql-commercial-server-5.7.19-1.1.el7.x86_64.rpm
+sudo yum install -y mysql-router-commercial-2.1.4-1.1.el7.x86_64.rpm mysql-shell-commercial-1.0.10-1.1.el7.x86_64.rpm meb-4.1.0-el7.x86_64.rpm
+# sudo yum install -y mysql-router-commercial-2.1.4-1.1.el7.x86_64.rpm mysql-shell-commercial-1.0.9-1.1.el6.x86_64.rpm
+sudo yum install -y mysql-router-commercial-2.1.4-1.1.el7.x86_64.rpm mysql-shell-8.0.3-0.1.dmr.el7.x86_64.rpm
+
+# just in case, removal:
+sudo systemctl stop mysqld.service
+sudo yum remove -y mysql-router mysql-shell mysql-community-common mysql-community-libs mysql-community-client mysql-community-server
+
+sudo yum remove -y mysql-router-commercial mysql-shell-commercial mysql-commercial-common mysql-commercial-libs mysql-commercial-client mysql-commercial-server
+
+
+sudo systemctl start mysqld.service
+sudo systemctl enable mysqld.service
+
+sudo vi + /etc/my.cnf
+# insert the following at the end, to avoid having to create complex passwords:
+..
+..
+validate-password=OFF
+
+# Then restart mysql:
+sudo systemctl restart mysqld.service
+
+# Change the root password:
+sudo grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1
+mysql -uroot -p 
+
+SET sql_log_bin = OFF; 
+alter user 'root'@'localhost' identified by 'oracle';
+SET sql_log_bin = ON; 
+exit
+
+sudo -i
+mysqlsh
+
+dba.configureLocalInstance();
+	...
+	..
+	    "errors": [], 
+	    "restart_required": true, 
+	    "status": "error"
+	}
+sudo vi + /etc/my.cnf
+# Comment out the "disabled_storage_engines" entry:
+..
+..
+#disabled_storage_engines = MyISAM,BLACKHOLE,FEDERATED,CSV,ARCHIVE
+
+
+systemctl restart mysqld.service
+mysqlsh
+ dba.checkInstanceConfiguration('root@localhost:3306');
+	{
+	    "status": "ok"
+	}
+
+# Bug 87300: https://bugs.mysql.com/bug.php?id=87300
+# 
+# Shell 
+mysql -uroot -poracle << EOF 
+SET sql_log_bin = OFF; 
+# GRANT SELECT ON sys.* TO ic@'%' WITH GRANT OPTION;
+ GRANT SELECT ON *.* TO ic@'%' WITH GRANT OPTION;
+SET sql_log_bin = ON; 
+EOF
+
+# On just one server, doesn't matter which:
+mysqlsh --uri ic@10.0.0.11:3306
+mysqlsh --uri ic@10.0.0.11:3306 --no-wizard
+
+# Default single primary:
+var cluster = dba.createCluster( 'myCluster');
+
+# For multi-primary:
+var cluster = dba.createCluster( 'myCluster', {multiMaster: true} );
+var cluster = dba.createCluster( 'myCluster', {multiMaster: true}, {iWhitelist:"10.0.0.11/13"} );
+
+	A new InnoDB cluster will be created on instance 'ic@gr1:3306'.
+
+	The MySQL InnoDB cluster is going to be setup in advanced Multi-Master Mode.
+	Before continuing you have to confirm that you understand the requirements and
+	limitations of Multi-Master Mode. Please read the manual before proceeding.
+
+
+	I have read the MySQL InnoDB cluster manual and I understand the requirements
+	and limitations of advanced Multi-Master Mode.
+	Confirm [y|N]: 
+
+	Creating InnoDB cluster 'myCluster' on 'ic@10.0.0.11:3306'...
+	Adding Seed Instance...
+
+	Cluster successfully created. Use Cluster.addInstance() to add MySQL instances.
+	At least 3 instances are needed for the cluster to be able to withstand up to
+	one server failure.
+
+
+	mysql-js> dba.help('createCluster')
+
+		Creates a MySQL InnoDB cluster.
+
+		SYNTAX
+
+		  <Dba>.createCluster(name[, options])
+
+		WHERE
+
+		  name: The name of the cluster object to be created.
+		  options: Dictionary with options that modify the behavior of this function.
+
+		DESCRIPTION
+
+		Creates a MySQL InnoDB cluster taking as seed instance the active global
+		session.
+
+		The options dictionary can contain the next values:
+
+		 - clusterAdminType: defines the type of management to be done on the cluster
+		   instances.
+		 - multiMaster: boolean value used to define an InnoDB cluster with multiple
+		   writable instances.
+		 - force: boolean, confirms that the multiMaster option must be applied.
+		 - adoptFromGR: boolean value used to create the InnoDB cluster based on
+		   existing replication group.
+		 - memberSslMode: SSL mode used to configure the members of the cluster.
+		 - ipWhitelist: The list of hosts allowed to connect to the instance for group
+		   replication.
+
+		The values for clusterAdminType options include: local, manual, guided or ssh,
+		however, at the moment only local is supported and is used as default value if
+		this attribute is not specified.
+
+		A InnoDB cluster may be setup in two ways:
+
+		 - Single Master: One member of the cluster allows write operations while the
+		   rest are in read only mode.
+		 - Multi Master: All the members in the cluster support both read and write
+		   operations.
+
+		By default this function create a Single Master cluster, use the multiMaster
+		option set to true if a Multi Master cluster is required.
+
+		The memberSslMode option supports these values:
+
+		 - REQUIRED: if used, SSL (encryption) will be enabled for the instances to
+		   communicate with other members of the cluster
+		 - DISABLED: if used, SSL (encryption) will be disabled
+		 - AUTO: if used, SSL (encryption) will be enabled if supported by the
+		   instance, otherwise disabled
+
+		If memberSslMode is not specified AUTO will be used by default.
+
+		The ipWhitelist format is a comma separated list of IP addresses or subnet CIDR
+		notation, for example: 192.168.1.0/24,10.0.0.1. By default the value is set to
+		AUTOMATIC, allowing addresses from the instance private network to be
+		automatically set for the whitelist.
+
+
+
+cluster.status();
+
+cluster.addInstance('ic@10.0.0.12:3306');
+cluster.addInstance('ic@10.0.0.13:3306');
+
+cluster.status();
+	{
+	    "clusterName": "myCluster", 
+	    "defaultReplicaSet": {
+		"name": "default", 
+		"status": "OK", 
+		"statusText": "Cluster is ONLINE and can tolerate up to ONE failure.", 
+		"topology": {
+		    "10.0.0.11:3306": {
+		        "address": "10.0.0.11:3306", 
+		        "mode": "R/W", 
+		        "readReplicas": {}, 
+		        "role": "HA", 
+		        "status": "ONLINE"
+		    }, 
+		    "10.0.0.12:3306": {
+		        "address": "10.0.0.12:3306", 
+		        "mode": "R/W", 
+		        "readReplicas": {}, 
+		        "role": "HA", 
+		        "status": "ONLINE"
+		    }, 
+		    "10.0.0.13:3306": {
+		        "address": "10.0.0.13:3306", 
+		        "mode": "R/W", 
+		        "readReplicas": {}, 
+		        "role": "HA", 
+		        "status": "ONLINE"
+		    }
+		}
+	    }
+	}
+
+
+# Make the changes persistent in my.cnf, run locally on each machine:
+\c ic@10.0.0.11:3306
+dba.configureLocalInstance('ic@localhost:3306');
+\c ic@10.0.0.12:3306
+dba.configureLocalInstance('ic@localhost:3306');
+\c ic@10.0.0.13:3306
+dba.configureLocalInstance('ic@localhost:3306');
+
+
+
+mysqlrouter --bootstrap ic@gr1:3306 --directory myrouter
+mysqlrouter --bootstrap ic@gr1:3306 --directory myrouter --force
+mysqlrouter --bootstrap ic@gr1:3306 --directory myrouter --username=vagrant
+
+	Bootstrapping MySQL Router instance at /home/vagrant/myrouter...
+	MySQL Router  has now been configured for the InnoDB cluster 'myCluster' (multi-master).
+
+	The following connection information can be used to connect to the cluster.
+
+	Classic MySQL protocol connections to cluster 'myCluster':
+	- Read/Write Connections: localhost:6446
+
+	X protocol connections to cluster 'myCluster':
+	- Read/Write Connections: localhost:64460
+
+myrouter/start.sh
+	PID 3921 written to /home/vagrant/myrouter/mysqlrouter.pid
+
+
+mysqlsh ic@gr1:6446
+
+
+
+# Let's create some data:
+gr1
+
+
+create database nexus;
+use nexus;
+
+create table replicant (
+id INT(11) NOT NULL AUTO_INCREMENT ,
+`First name` varchar(40) not null default '',
+`Last name` varchar(40) not null default '',
+`Replicant` enum('Yes','No') not null default 'Yes',
+PRIMARY KEY (id)
+) engine=InnoDB row_format=COMPACT;
+
+INSERT INTO `replicant` (`First name`,`Last name`,`Replicant`)
+VALUES 
+('Roy','Hauer','Yes'),
+('Rutger','Batty','Yes'),
+('Voight','Kampff','Yes'),
+('Pris','Hannah','Yes'),
+('Daryl','Stratton','Yes'),
+('Rachael','Young','Yes'),
+('Sean','Tyrell','Yes'),
+('Rick','Ford','No'),
+('Harrison','Deckard','Yes');
+
+gr2 & gr3
+
+select * from nexus.replicant;
++----+------------+-----------+-----------+
+| id | First name | Last name | Replicant |
++----+------------+-----------+-----------+
+|  5 | Roy        | Hauer     | Yes       |
+| 12 | Rutger     | Batty     | Yes       |
+| 19 | Voight     | Kampff    | Yes       |
+| 26 | Pris       | Hannah    | Yes       |
+| 33 | Daryl      | Stratton  | Yes       |
+| 40 | Rachael    | Young     | Yes       |
+| 47 | Sean       | Tyrell    | Yes       |
+| 54 | Rick       | Ford      | No        |
+| 61 | Harrison   | Deckard   | Yes       |
++----+------------+-----------+-----------+
+
+
+select COUNT_CONFLICTS_DETECTED from performance_schema.replication_group_member_stats;
+
+#########
+# Case 1:
+# Execute, via Terminator, in the exact same moment, using sysdate(5) to see who gets there first.
+# In gr1:
+use nexus; select sysdate(5); start transaction; select sysdate(5); select * from replicant where id=3; select sysdate(5); update replicant set Replicant = 'Yes' where id=3; select sysdate(5); select * from replicant where id=3; select sysdate(5); commit;
+
+# In gr2:
+use nexus; select sysdate(5); start transaction; select sysdate(5); select * from replicant where id=3; select sysdate(5); update replicant set Replicant = 'No' where id=3; select sysdate(5); select * from replicant where id=3; select sysdate(5); commit;
+
+# Case 1.1
+# with a sleep(1) in gr1.
+# In gr1:
+use nexus; select sysdate(5); start transaction; select sysdate(5),sleep(1); select * from replicant where id=3; select sysdate(5); update replicant set Replicant = 'Yes' where id=3; select sysdate(5); select * from replicant where id=3; select sysdate(5); commit; select sysdate(5);
+
+# In gr2:
+use nexus; select sysdate(5); start transaction; select sysdate(5); select * from replicant where id=3; select sysdate(5); update replicant set Replicant = 'No' where id=3; select sysdate(5); select * from replicant where id=3; select sysdate(5); commit; select sysdate(5);
+
+
+#########
+# Case 2:
+# Stepped conflict between the 2 terminals:
+# 
+# In gr1:
+use nexus; 
+start transaction; 
+select * from replicant where id=3; 
+update replicant set Replicant = 'Yes' where id=3; 
+select * from replicant where id=3; 
+
+	# In gr2:
+	use nexus; 
+	start transaction; 
+	select * from replicant where id=3; 
+	update replicant set Replicant = 'No' where id=3; 
+	select * from replicant where id=3; 
+
+# In gr1:
+select * from replicant where id=3; 
+commit;
+select * from replicant where id=3; 
+
+	# In gr2:
+	select * from replicant where id=3; 
+	commit;
+	select * from replicant where id=3; 
+
+#########
+# Case 3:
+# 1 transaction starts, and another completes before the other has time to finish.
+# In gr1:
+use nexus; 
+start transaction; 
+select * from replicant where id=3; 
+update replicant set Replicant = 'Yes' where id=3; 
+select * from replicant where id=3; 
+
+	# In gr2:
+	use nexus; 
+	start transaction; 
+	select * from replicant where id=3; 
+	update replicant set Replicant = 'No' where id=3; 
+	select * from replicant where id=3; 
+	commit;
+
+# In gr1:
+select * from replicant where id=3; 
+commit;
+select * from replicant where id=3; 
+

@@ -1,0 +1,237 @@
+# Watching status & write node:
+#
+while :; do  mysql -uic  -hic1 -P6446 -s -e "select sysdate();select @@hostname; select MEMBER_HOST, member_state, member_role from performance_schema.replication_group_members;"; sleep 1; done
+while :; do mysql -uic  -hic1 -P6446 -t -E -e "select sysdate(); select @@hostname"; sleep 1; done
+
+
+# From ic1, ic2, ic3, ic4 & ic5 all give:
+# (mysqlrouter.conf: routing_strategy=first-available)
+mysql -uic  -hic2 -P6446 -e "select @@hostname"
++------------+
+| @@hostname |
++------------+
+| ic1        |
++------------+
+
+# (mysqlrouter.conf: routing_strategy=round-robin)
+mysql -uic  -hic2 -P6446 -E -e "select @@hostname"
+
+
+cluster.status();
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "ssl": "REQUIRED", 
+        "status": "OK", 
+        "statusText": "Cluster is ONLINE and can tolerate up to 2 failures.", 
+        "topology": {
+            "ic1:3306": {
+                "address": "ic1:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }, 
+            "ic2:3306": {
+                "address": "ic2:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }, 
+            "ic3:3306": {
+                "address": "ic3:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }, 
+            "ic4:3306": {
+                "address": "ic4:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }, 
+            "ic5:3306": {
+                "address": "ic5:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }
+        }, 
+        "topologyMode": "Multi-Primary"
+    }, 
+    "groupInformationSourceMember": "ic2:3306"
+}
+
+systemctl restart mysqld.service
+
+[root@ic3 vagrant]# mysql -uic  -hic2 -P6446 -e "select @@hostname"
++------------+
+| @@hostname |
++------------+
+| ic1        |
++------------+
+
+[root@ic3 vagrant]# mysql -uic  -hic2 -P6446 -e "select @@hostname"
++------------+
+| @@hostname |
++------------+
+| ic2        |
++------------+
+
+[root@ic3 vagrant]# mysql -uic  -hic2 -P6446 -e "select @@hostname"
++------------+
+| @@hostname |
++------------+
+| ic1        |
++------------+
+
+@ic1:
+systemctl stop mysqld.service
+
+cluster.status();
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "ssl": "REQUIRED", 
+        "status": "OK_PARTIAL", 
+        "statusText": "Cluster is ONLINE and can tolerate up to ONE failure. 1 member is not active", 
+        "topology": {
+            "ic1:3306": {
+                "address": "ic1:3306", 
+                "mode": "n/a", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "shellConnectError": "MySQL Error 2003 (HY000): Can't connect to MySQL server on 'ic1' (111)", 
+                "status": "(MISSING)"
+            }, 
+            "ic2:3306": {
+                "address": "ic2:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }, 
+            "ic3:3306": {
+                "address": "ic3:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }, 
+            "ic4:3306": {
+                "address": "ic4:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }, 
+            "ic5:3306": {
+                "address": "ic5:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }
+        }, 
+        "topologyMode": "Multi-Primary"
+    }, 
+    "groupInformationSourceMember": "ic2:3306"
+}
+
+[root@ic3 vagrant]# mysql -uic  -hic2 -P6446 -e "select @@hostname"
++------------+
+| @@hostname |
++------------+
+| ic1        |
++------------+
+
+[root@ic3 vagrant]# mysql -uic  -hic2 -P6446 -e "select @@hostname"
++------------+
+| @@hostname |
++------------+
+| ic2        |
++------------+
+
+[root@ic3 vagrant]# mysql -uic  -hic2 -P6446 -e "select @@hostname"
++------------+
+| @@hostname |
++------------+
+| ic2        |
++------------+
+
+
+@ic2:
+systemctl stop mysqld.service
+
+cluster.status();
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "ssl": "REQUIRED", 
+        "status": "OK_PARTIAL", 
+        "statusText": "Cluster is ONLINE and can tolerate up to ONE failure. 1 member is not active", 
+        "topology": {
+            "ic1:3306": {
+                "address": "ic1:3306", 
+                "mode": "n/a", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "shellConnectError": "MySQL Error 2003 (HY000): Can't connect to MySQL server on 'ic1' (111)", 
+                "status": "(MISSING)"
+            }, 
+            "ic2:3306": {
+                "address": "ic2:3306", 
+                "mode": "n/a", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "shellConnectError": "MySQL Error 2003 (HY000): Can't connect to MySQL server on 'ic2' (111)", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }, 
+            "ic3:3306": {
+                "address": "ic3:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }, 
+            "ic4:3306": {
+                "address": "ic4:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }, 
+            "ic5:3306": {
+                "address": "ic5:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE", 
+                "version": "8.0.17"
+            }
+        }, 
+        "topologyMode": "Multi-Primary"
+    }, 
+    "groupInformationSourceMember": "ic4:3306"
+}
+
+

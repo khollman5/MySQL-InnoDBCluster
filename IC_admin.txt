@@ -1,0 +1,481 @@
+
+###########
+# Are we on a cluster?
+#
+# Either this way:
+	mysqlsh --uri root@10.0.0.11:3306
+# or
+	mysqlsh
+	 shell.connect('root@localhost:3306')
+	  Please provide the password for 'root@localhost:3306': 
+	  Creating a Session to 'root@localhost:3306'
+	  Classic Session successfully established. No default schema selected.
+
+	 var cluster = dba.getCluster()
+	 cluster.status()
+# If yes, then:
+	{
+	    "clusterName": "myCluster", 
+	    "defaultReplicaSet": {
+		"instances": [
+		    {
+		        "host": "10.0.0.11:3306", 
+		        "label": "10.0.0.11:3306", 
+		        "role": "HA"
+		    },
+		    {
+		        "host": "10.0.0.12:3306", 
+		        "label": "10.0.0.12:3306", 
+		        "role": "HA"
+		    },
+		    {
+		        "host": "10.0.0.13:3306", 
+		        "label": "10.0.0.13:3306", 
+		        "role": "HA"
+		    }
+		], 
+		"name": "default"
+	    }
+	}
+
+# if not, then:
+	TypeError: Cannot read property 'status' of undefined
+
+
+# Check the IC/GR configuration locally on each instance separately:
+ dba.checkInstanceConfiguration('root@localhost:3306')
+# if part of an existing IC:
+	Validating instance...
+	Dba.checkInstanceConfiguration: The instance 'root@localhost:3306' is already part of an InnoDB Cluster (RuntimeError)
+# if not part:
+	Validating instance...
+
+	The instance 'localhost:3306' is valid for Cluster usage
+	{
+	    "status": "ok"
+	}
+
+###########
+# Check the instances found:
+dba.checkInstanceConfiguration('root@10.0.0.11:3306')
+dba.checkInstanceConfiguration('root@10.0.0.12:3306')
+dba.checkInstanceConfiguration('root@10.0.0.13:3306')
+
+
+mysql-js> cluster.status()
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "primary": "10.0.0.11:3306", 
+        "status": "NO_QUORUM", 
+        "statusText": "Cluster has no quorum as visible from '10.0.0.11:3306' and cannot process write transactions. 2 members are not active", 
+        "topology": {
+            "10.0.0.11:3306": {
+                "address": "10.0.0.11:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }, 
+            "10.0.0.12:3306": {
+                "address": "10.0.0.12:3306", 
+                "mode": "R/O", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "UNREACHABLE"
+            }, 
+            "10.0.0.13:3306": {
+                "address": "10.0.0.13:3306", 
+                "mode": "R/O", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "(MISSING)"
+            }
+        }
+    }
+}
+
+###########
+# Restoring a Cluster from Quorum Loss
+
+cluster.forceQuorumUsingPartitionOf()
+
+var cluster = dba.getCluster("myCluster")
+cluster.forceQuorumUsingPartitionOf("10.0.0.12:3306")
+	Restoring replicaset 'default' from loss of quorum, by using the partition composed of [10.0.0.11:3306]
+
+	Please provide the password for 'root@10.0.0.12:3306': 
+	Restoring the InnoDB cluster ...
+
+	Cluster.forceQuorumUsingPartitionOf: The instance '10.0.0.12:3306' cannot be used to restore the cluster as it is not an active member of replication group. (RuntimeError)
+	mysql-js> cluster.forceQuorumUsingPartitionOf("10.0.0.13:3306")
+	Restoring replicaset 'default' from loss of quorum, by using the partition composed of [10.0.0.11:3306]
+
+	Please provide the password for 'root@10.0.0.13:3306': 
+	Restoring the InnoDB cluster ...
+
+	Cluster.forceQuorumUsingPartitionOf: The instance '10.0.0.13:3306' cannot be used to restore the cluster as it is not an active member of replication group. (RuntimeError)
+	mysql-js> cluster.forceQuorumUsingPartitionOf("10.0.0.11:3306")
+	Restoring replicaset 'default' from loss of quorum, by using the partition composed of [10.0.0.11:3306]
+
+	Please provide the password for 'root@10.0.0.11:3306': 
+	Restoring the InnoDB cluster ...
+
+	The InnoDB cluster was successfully restored using the partition from the instance 'root@10.0.0.11:3306'.
+
+	WARNING: To avoid a split-brain scenario, ensure that all other members of the replicaset are removed or joined back to the group that was restored.
+
+
+###########
+cluster.rescan()
+	Cluster.rescan: There is no quorum to perform the operation (RuntimeError)
+
+mysql-js> cluster.rescan()
+	Rescanning the cluster...
+
+	Result of the rescanning operation:
+	{
+	    "defaultReplicaSet": {
+		"name": "default", 
+		"newlyDiscoveredInstances": [], 
+		"unavailableInstances": [
+		    {
+		        "host": "10.0.0.12:3306", 
+		        "label": "10.0.0.12:3306", 
+		        "member_id": "cf05aad8-3faa-11e7-a5a8-080027e5efc5"
+		    },
+		    {
+		        "host": "10.0.0.13:3306", 
+		        "label": "10.0.0.13:3306", 
+		        "member_id": "cd63a043-3faa-11e7-a5de-080027e5efc5"
+		    }
+		]
+	    }
+	}
+
+	The instance '10.0.0.12:3306' is no longer part of the HA setup. It is either offline or left the HA group.
+	You can try to add it to the cluster again with the cluster.rejoinInstance('10.0.0.12:3306') command or you can remove it from the cluster configuration.
+	Would you like to remove it from the cluster metadata? [Y|n]: n
+
+	The instance '10.0.0.13:3306' is no longer part of the HA setup. It is either offline or left the HA group.
+	You can try to add it to the cluster again with the cluster.rejoinInstance('10.0.0.13:3306') command or you can remove it from the cluster configuration.
+	Would you like to remove it from the cluster metadata? [Y|n]: n
+
+
+ cluster.rejoin('10.0.0.13:3306')
+
+mysql-js> cluster.rejoinInstance('10.0.0.12:3306');
+	Rejoining the instance to the InnoDB cluster. Depending on the original
+	problem that made the instance unavailable, the rejoin operation might not be
+	successful and further manual steps will be needed to fix the underlying
+	problem.
+
+	Please monitor the output of the rejoin operation and take necessary action if
+	the instance cannot rejoin.
+
+	Please provide the password for 'root@10.0.0.12:3306': 
+	Rejoining instance to the cluster ...
+
+	The instance 'root@10.0.0.12:3306' was successfully rejoined on the cluster.
+
+	The instance '10.0.0.12:3306' was successfully added to the MySQL Cluster.
+
+
+
+mysql-js> cluster.rescan()
+	Rescanning the cluster...
+
+	Result of the rescanning operation:
+	{
+	    "defaultReplicaSet": {
+		"name": "default", 
+		"newlyDiscoveredInstances": [
+		    {
+		        "host": "gr2:3306", 
+		        "member_id": "cf05aad8-3faa-11e7-a5a8-080027e5efc5", 
+		        "name": null
+		    }
+		], 
+		"unavailableInstances": [
+		    {
+		        "host": "10.0.0.13:3306", 
+		        "label": "10.0.0.13:3306", 
+		        "member_id": "cd63a043-3faa-11e7-a5de-080027e5efc5"
+		    },
+		    {
+		        "host": "gr2:3306", 
+		        "label": "gr2:3306", 
+		        "member_id": "cf05aad8-3faa-11e7-a5a8-080027e5efc5"
+		    }
+		]
+	    }
+	}
+
+	A new instance 'gr2:3306' was discovered in the HA setup.
+	Would you like to add it to the cluster metadata? [Y|n]: n
+
+	The instance '10.0.0.13:3306' is no longer part of the HA setup. It is either offline or left the HA group.
+	You can try to add it to the cluster again with the cluster.rejoinInstance('10.0.0.13:3306') command or you can remove it from the cluster configuration.
+	Would you like to remove it from the cluster metadata? [Y|n]: 
+	Removing instance from the cluster metadata...
+
+	The instance '10.0.0.13:3306' was successfully removed from the cluster metadata.
+
+
+	The instance 'gr2:3306' is no longer part of the HA setup. It is either offline or left the HA group.
+	You can try to add it to the cluster again with the cluster.rejoinInstance('gr2:3306') command or you can remove it from the cluster configuration.
+	Would you like to remove it from the cluster metadata? [Y|n]: n
+
+
+mysql-js> cluster.checkInstanceState('root@10.0.0.13:3306')
+	Please provide the password for 'root@10.0.0.13:3306': 
+	Analyzing the instance replication state...
+
+	The instance '10.0.0.13:3306' is valid for the cluster.
+	The instance is new to Group Replication.
+
+	{
+	    "reason": "new", 
+	    "state": "ok"
+	}
+
+
+cluster.addInstance('root@10.0.0.13:3306')
+	A new instance will be added to the InnoDB cluster. Depending on the amount of
+	data on the cluster this might take from a few seconds to several hours.
+
+	Please provide the password for 'root@10.0.0.13:3306': 
+	Adding instance to the cluster ...
+
+	Cluster.addInstance: WARNING: Not running locally on the server and can not access its error log.
+	ERROR: 
+	Group Replication join failed.
+	ERROR: Error joining instance to cluster: '10.0.0.13@3306' - Query failed. 3094 (HY000): The START GROUP_REPLICATION command failed as the applier module failed to start.. Query: START group_replication (RuntimeError)
+
+
+###########
+# After failed node / restart
+#
+# From one of the other 2 nodes:
+	mysql-js> cluster.status()
+	{
+	    "clusterName": "myCluster", 
+	    "defaultReplicaSet": {
+		"name": "default", 
+		"status": "OK_NO_TOLERANCE", 
+		"statusText": "Cluster is NOT tolerant to any failures. 1 member is not active", 
+		"topology": {
+		    "10.0.0.11:3306": {
+		        "address": "10.0.0.11:3306", 
+		        "mode": "R/W", 
+		        "readReplicas": {}, 
+		        "role": "HA", 
+		        "status": "(MISSING)"
+		    }, 
+		    "10.0.0.12:3306": {
+		        "address": "10.0.0.12:3306", 
+		        "mode": "R/W", 
+		        "readReplicas": {}, 
+		        "role": "HA", 
+		        "status": "ONLINE"
+		    }, 
+		    "10.0.0.13:3306": {
+		        "address": "10.0.0.13:3306", 
+		        "mode": "R/W", 
+		        "readReplicas": {}, 
+		        "role": "HA", 
+		        "status": "ONLINE"
+		    }
+		}
+	    }
+	}
+
+
+###########
+# On gr1 / 10.0.0.11:
+
+dba.checkInstanceConfiguration('ic@10.0.0.11:3306')
+
+  "status": "ok"
+
+###########
+# On another ONLINE node:
+
+\c ic@10.0.0.12:3306
+var cluster = dba.getCluster("myCluster")
+cluster.rescan()
+ --> remove instance
+
+cluster.addInstance('ic@10.0.0.11:3306');
+
+###########
+# goes the RECOVERING phase whilst coming back to the group.
+
+	mysql-js> cluster.status()
+	{
+	    "clusterName": "myCluster", 
+	    "defaultReplicaSet": {
+		"name": "default", 
+		"status": "OK_NO_TOLERANCE", 
+		"statusText": "Cluster is NOT tolerant to any failures. 1 member is not active", 
+		"topology": {
+		    "10.0.0.11:3306": {
+		        "address": "10.0.0.11:3306", 
+		        "mode": "R/W", 
+		        "readReplicas": {}, 
+		        "role": "HA", 
+		        "status": "RECOVERING"
+		    }, 
+		    "10.0.0.12:3306": {
+		        "address": "10.0.0.12:3306", 
+		        "mode": "R/W", 
+		        "readReplicas": {}, 
+		        "role": "HA", 
+		        "status": "ONLINE"
+		    }, 
+		    "10.0.0.13:3306": {
+		        "address": "10.0.0.13:3306", 
+		        "mode": "R/W", 
+		        "readReplicas": {}, 
+		        "role": "HA", 
+		        "status": "ONLINE"
+		    }
+		}
+	    }
+	}
+
+
+###########
+# After complete outage:
+#
+# cluster = dba.rebootClusterFromCompleteOutage()
+
+mysqlsh --uri ic@10.0.0.11:3306
+mysqlsh --uri ic@10.0.0.12:3306
+mysqlsh --uri ic@10.0.0.13:3306
+
+# First find out the situation of each node:
+
+  var cluster = dba.getCluster("myCluster")
+  cluster.status()
+
+# If just 1 is showing an error:
+
+mysql-js> cluster.status()
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "status": "OK_NO_TOLERANCE", 
+        "statusText": "Cluster is NOT tolerant to any failures. 3 members are not active", 
+        "topology": {
+            "10.0.0.11:3306": {
+                "address": "10.0.0.11:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "(MISSING)"
+            }, 
+            "10.0.0.12:3306": {
+                "address": "10.0.0.12:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ERROR"
+            }, 
+            "10.0.0.13:3306": {
+                "address": "10.0.0.13:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "(MISSING)"
+            }
+        }
+    }, 
+    "warning": "The instance status may be inaccurate as it was generated from an instance in Error state"
+}
+
+# So the following 
+var cluster = dba.rebootClusterFromCompleteOutage();
+
+
+# so from either node 1 or 3:
+cluster.rescan()
+
+# Remove
+cluster.addInstance('ic@10.0.0.12:3306');
+
+cluster.rejoinInstance('10.0.0.12:3306')
+
+# Failed with various errors.
+# Restarted the mysql instance on node 2 
+# Node 1 & 3 gave:
+
+mysql-js> cluster.status()
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "status": "OK_NO_TOLERANCE", 
+        "statusText": "Cluster is NOT tolerant to any failures.", 
+        "topology": {
+            "10.0.0.11:3306": {
+                "address": "10.0.0.11:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }, 
+            "10.0.0.13:3306": {
+                "address": "10.0.0.13:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }
+        }
+    }
+}
+
+# So on one of the other nodes:
+
+cluster.addInstance('ic@10.0.0.12:3306');
+
+mysql-js> cluster.status()
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "status": "OK", 
+        "statusText": "Cluster is ONLINE and can tolerate up to ONE failure.", 
+        "topology": {
+            "10.0.0.11:3306": {
+                "address": "10.0.0.11:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }, 
+            "10.0.0.12:3306": {
+                "address": "10.0.0.12:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }, 
+            "10.0.0.13:3306": {
+                "address": "10.0.0.13:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }
+        }
+    }
+}
+
+cluster.forceQuorumUsingPartitionOf("localhost:3306");
+mysqlrouter.conf: routing_strategy=round-robin
+
+

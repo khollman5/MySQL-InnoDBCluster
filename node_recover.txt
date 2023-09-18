@@ -1,0 +1,69 @@
+Backup and Restore Of Group Replication Node ( MySQL 8.0 ) (Doc ID 2449881.1)
+
+
+# On server to be restored:
+
+systemctl stop mysqld.service
+
+
+mysqlbackup --defaults-file=/etc/my.cnf -uroot --backup-dir=/home/vagrant/backup/mysql/2019-05-30_10-39-45/ --uncompress --datadir=/var/lib/mysql  --uncompress copy-back
+
+chown -R mysql:mysql /var/lib/mysql
+rm -rf /var/lib/mysql/*-bin*
+
+vi /etc/my.cnf
+[mysqld]
+super_read_only=1
+event_scheduler=off
+
+
+cat ~vagrant/backup/mysql/2019-05-30_10-39-45/meta/backup_gtid_executed.sql
+# On a new slave, issue the following command if GTIDs are enabled:
+  SET @@GLOBAL.GTID_PURGED='155d01e3-5b85-11e9-b5b5-080027b46af9:1-21395756,bc780881-5b85-11e9-ba66-080027b46af9:1-356';
+
+# Use the following command if you want to use the GTID handshake protocol:
+# CHANGE MASTER TO MASTER_AUTO_POSITION=1; 
+
+
+
+systemctl start mysqld.service
+
+mysqlsh --uri ic@ic3:3306 --sql
+
+SET sql_log_bin = OFF; 
+RESET SLAVE;
+RESET MASTER;
+SET @@GLOBAL.GTID_PURGED='155d01e3-5b85-11e9-b5b5-080027b46af9:1-21395756,bc780881-5b85-11e9-ba66-080027b46af9:1-356';
+SET sql_log_bin = ON; 
+
+\js
+dba.checkInstanceConfiguration('ic@ic3:3306')
+dba.configureInstance('ic@ic3:3306')
+
+
+# On primary instance:
+
+cluster = dba.getCluster();
+cluster.status();
+
+cluster.rescan()
+"y" to remove ic3.
+
+cluster.addInstance('ic@ic3:3306')
+
+
+# On restored instance:
+vi /etc/my.cnf
+[mysqld]
+#super_read_only=1
+#event_scheduler=off
+
+or
+
+mysqlsh --uri ic@ic3:3306 --sql
+set SQL_LOG_BIN=0;
+set global super_read_only=0;
+set global event_scheduler=1
+set SQL_LOG_BIN=1;
+
+

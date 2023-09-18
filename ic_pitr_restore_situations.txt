@@ -1,0 +1,419 @@
+
+###############################################################################
+## Full & Incre --only-innodb backup for full & incre restore:
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+ --backup-dir=/home/vagrant/backup --backup-image=full_backup.img \
+ --with-timestamp --only-innodb  backup-to-image
+
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental=optimistic \
+  --incremental-base=history:last_backup \
+  --backup-dir=/home/vagrant/backup/temp_dir \
+  --backup-image=incr_backup1.mbi --only-innodb \
+    backup-to-image
+
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-07_21-08-01/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql \
+>   --with-timestamp \
+>   copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/incr_backup1.mbi \
+>   --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental \
+>   --with-timestamp \
+>   copy-back-and-apply-log
+
+# Failed to start instance due to mysql.plugin table absence.
+
+
+###############################################################################
+## Full backup & Full restore w/ --only-innodb (no incremental):
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+--backup-dir=/home/vagrant/backup --backup-image=full_backup.img \
+--with-timestamp --progress-interval=10 backup-to-image
+
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-07_20-54-51/full_backup.img \
+--backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql --with-timestamp \
+--only-innodb copy-back-and-apply-log
+
+var cluster = dba.rebootClusterFromCompleteOutage();
+remove other 2 instances	OK
+
+mysql -uroot -poracle  << EOF
+> SET sql_log_bin = OFF; 
+> reset master;
+> # How To Manually Remove InnoDB Cluster Metadata Directory (Doc ID 2274320.1)
+> drop database mysql_innodb_cluster_metadata;
+> SET sql_log_bin = ON; 
+> EOF
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 3190 (HY000) at line 2: RESET MASTER is not allowed because Group Replication is running.
+
+# So:
+stop group_replication;
+mysql -uroot -poracle  << EOF
+> SET sql_log_bin = OFF; 
+> reset master;
+> # How To Manually Remove InnoDB Cluster Metadata Directory (Doc ID 2274320.1)
+> drop database mysql_innodb_cluster_metadata;
+> SET sql_log_bin = ON; 
+> EOF
+
+dba.configureLocalInstance()	OK
+dba.checkInstanceConfiguration	OK
+ var cluster = dba.createCluster( 'myCluster')	OK
+
+
+
+###############################################################################
+## Full & Incre backup --only-innodb & Full restore w/ incre restore --only-iinodb:
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+> --backup-dir=/home/vagrant/backup --backup-image=full_backup.img \
+> --with-timestamp --only-innodb backup-to-image
+
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock   --incremental=optimistic --incremental-base=history:last_backup   --backup-dir=/home/vagrant/backup/temp_dir   --backup-image=incr_backup1.mbi --only-innodb    backup-to-image
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-07_21-32-33/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql \
+>   --with-timestamp \
+>   copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/incr_backup1.mbi \
+>   --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental \
+>   --with-timestamp --only-innodb copy-back-and-apply-log
+
+Instance fails to start due to issues with mysql.plugin table.
+
+###############################################################################
+## Full & incr backups and full restore and incr restore --only-innodb:
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock --backup-dir=/home/vagrant/backup --backup-image=full_backup.img --with-timestamp backup-to-image
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+>   --incremental=optimistic \
+> --incremental-base=history:last_backup \
+>   --backup-dir=/home/vagrant/backup/temp_dir \
+>   --backup-image=incr_backup1.mbi \
+>    backup-to-image
+
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-07_23-24-19/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql \
+>   --with-timestamp \
+>   copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/incr_backup1.mbi   --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental   --with-timestamp --only-innodb copy-back-and-apply-log
+
+dba.configureLocalInstance()	OK
+
+dba.checkInstanceConfiguration('ic:oracle@10.0.0.12:3306')
+Validating instance...
+
+The instance '10.0.0.12:3306' is not valid for Cluster usage.
+
+The following issues were encountered:
+
+ - 1 table(s) do not have a Primary Key or Primary Key Equivalent (non-null unique key).
+
+Please fix these issues and try again.
+
+
+###############################################################################
+## Full restore --only-innodb option upon restore (not backup):
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-07_23-24-19/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql   --with-timestamp --only-innodb  copy-back-and-apply-log
+
+dba.configureLocalInstance()	OK
+# reboot instance after commenting out disabled_storage_engines
+dba.checkInstanceConfiguration	OK
+var cluster = dba.createCluster( 'myCluster');
+Dba.createCluster: ERROR: Error starting cluster: '10.0.0.12:3306' - Query failed. 3094 (HY000): The START GROUP_REPLICATION command failed as the applier module failed to start.. Query: START group_replication (RuntimeError)
+
+
+
+###############################################################################
+## PITR full backp restore & incremental restore, cleaned my.cnf of all GR entries, then backed up Full backup & full restore. dba.configureLocalInstance() gave typical restart params but: 
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-07_23-24-19/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql   --with-timestamp  copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/incr_backup1.mbi \
+   --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental \
+   --with-timestamp \
+   copy-back-and-apply-log
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock --backup-dir=/home/vagrant/backup --backup-image=full_backup.img --with-timestamp backup-to-image
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-07_23-55-38/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql   --with-timestamp  copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-07_23-55-38/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql   --with-timestamp  copy-back-and-apply-log
+
+ dba.checkInstanceConfiguration('ic:oracle@10.0.0.12:3306');
+Validating instance...
+
+The instance '10.0.0.12:3306' is not valid for Cluster usage.
+
+The following issues were encountered:
+
+ - 1 table(s) do not have a Primary Key or Primary Key Equivalent (non-null unique key).
+
+Please fix these issues and try again.
+
+
+###############################################################################
+## 
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+ --backup-dir=/home/vagrant/backup --backup-image=full_backup.img \
+ --with-timestamp --progress-interval=10 backup-to-image
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental=optimistic \
+  --incremental-base=history:last_backup \
+  --backup-dir=/home/vagrant/backup/temp_dir \
+  --backup-image=incr_backup1.mbi \
+    backup-to-image
+
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-08_13-42-17/full_backup.img \
+--backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql --with-timestamp \
+ copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/incr_backup1.mbi \
+   --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental \
+   --with-timestamp \
+   copy-back-and-apply-log
+
+
+mysqlsh --uri ic:oracle@10.0.0.12:3306
+
+var cluster = dba.rebootClusterFromCompleteOutage();
+Dba.rebootClusterFromCompleteOutage: Dba.rebootClusterFromCompleteOutage: ERROR: 1 table(s) do not have a Primary Key or Primary Key Equivalent (non-null unique key).
+ERROR: Error starting cluster: The operation could not continue due to the following requirements not being met:
+Non-compatible tables found in database. (RuntimeError)
+
+
+###############################################################################
+## From scratch:
+
+# back up just after persisting changes in my.cnf:
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+--backup-dir=/home/vagrant/backup --backup-image=full_backup.img \
+--with-timestamp backup-to-image
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental=optimistic \
+--incremental-base=history:last_backup \
+  --backup-dir=/home/vagrant/backup/temp_dir \
+  --backup-image=incr_backup1.mbi \
+   backup-to-image
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-08_17-21-50/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql   --with-timestamp   copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/incr_backup1.mbi \
+  --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental \
+  --with-timestamp \
+  copy-back-and-apply-log
+
+
+
+mysql> select engine, count(*) from tables group by engine;
++--------------------+----------+
+| engine             | count(*) |
++--------------------+----------+
+| NULL               |      101 |
+| CSV                |        3 |
+| InnoDB             |       35 |
+| MEMORY             |       51 |
+| MyISAM             |       10 |
+| PERFORMANCE_SCHEMA |       87 |
++--------------------+----------+
+6 rows in set (0,02 sec)
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+>   --incremental=optimistic \
+>   --incremental-base=history:last_backup \
+>   --backup-dir=/home/vagrant/backup/temp_dir \
+>   --backup-image=incr_backup1.mbi --only-innodb \
+>     backup-to-image
+
++--------------------+----------+
+| engine             | count(*) |
++--------------------+----------+
+| NULL               |      101 |
+| CSV                |        4 |
+| InnoDB             |       35 |
+| MEMORY             |       51 |
+| MyISAM             |       10 |
+| PERFORMANCE_SCHEMA |       87 |
++--------------------+----------+
+
+
+mysql -uroot -poracle -e "select engine, count(*) from information_schema.tables group by engine"
+
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental \
+--incremental-base=history:last_backup \
+  --backup-dir=/home/vagrant/backup/temp_dir \
+  --backup-image=incr_backup1.mbi \
+   backup-to-image
+
+
++-----------------+--------------+--------+
+| table_name      | table_schema | engine |
++-----------------+--------------+--------+
+| backup_progress | mysql        | CSV    |
+| general_log     | mysql        | CSV    |
+| slow_log        | mysql        | CSV    |
++-----------------+--------------+--------+
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+ --backup-dir=/home/vagrant/backup --backup-image=full_backup.img \
+ --with-timestamp backup-to-image
+
+/home/vagrant/backup/2017-11-08_19-20-01/meta/MEB_2017-11-08.19-20-01_image_backup.log
+-------------------------------------------------------------
+   Start LSN                  : 2651648
+   End LSN                    : 2652124
+-------------------------------------------------------------
+
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental=optimistic \
+--start-lsn=2652124 \
+  --backup-dir=/home/vagrant/backup/temp_dir \
+  --backup-image=incr_backup1.mbi --with-timestamp \
+   backup-to-image
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-08_19-20-01/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql   --with-timestamp   copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/2017-11-08_19-25-59/incr_backup1.mbi \
+  --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental \
+  --with-timestamp \
+  copy-back-and-apply-log
+
+###############################################################################
+## From scratch: w/o commenting out "disabled_storage_engines"
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+ --backup-dir=/home/vagrant/backup --backup-image=full_backup.img \
+ --with-timestamp backup-to-image
+
+/home/vagrant/backup/2017-11-08_20-04-24/full_backup.img
+End LSN                    : 2643901
+
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental=optimistic \
+--start-lsn=2643901 \
+  --backup-dir=/home/vagrant/backup/temp_dir \
+  --backup-image=incr_backup1.mbi  \
+   backup-to-image
+
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-08_20-04-24/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql   --with-timestamp   copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/incr_backup1.mbi \
+  --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental \
+  --with-timestamp \
+  copy-back-and-apply-log
+
+
+
+###############################################################################
+## From scratch: w/ FLUSH PRIVILEGES
+
+mysqlbackup -ubackup -poracle --socket=/var/lib/mysql/mysql.sock \
+ --backup-dir=/home/vagrant/backup --backup-image=full_backup.img \
+ --with-timestamp backup-to-image
+
+/home/vagrant/backup/2017-11-08_20-34-21/full_backup.img
+
+mysqlbackup --user=backup -poracle --socket=/var/lib/mysql/mysql.sock \
+  --incremental \
+--incremental-base=history:last_backup \
+  --backup-dir=/home/vagrant/backup/temp_dir \
+  --backup-image=incr_backup1.mbi \
+   backup-to-image
+
+
+# restore:
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/2017-11-08_20-34-21/full_backup.img --backup-dir=/tmp/mysql_backup_pitr --datadir=/var/lib/mysql   --with-timestamp   copy-back-and-apply-log
+
+mysqlbackup --defaults-file=/etc/my.cnf --backup-image=/home/vagrant/backup/temp_dir/incr_backup1.mbi \
+  --incremental-backup-dir=/home/admin/temp_dir --datadir=/var/lib/mysql --incremental \
+  --with-timestamp \
+  copy-back-and-apply-log
+
+
+
+
+ MySQL  localhost:3306 ssl  SQL > SET sql_log_bin = OFF; 
+Query OK, 0 rows affected (0.00 sec)
+ MySQL  localhost:3306 ssl  SQL > 
+ MySQL  localhost:3306 ssl  SQL > # GRANT SELECT ON sys.* TO ic@'%' WITH GRANT OPTION;
+ MySQL  localhost:3306 ssl  SQL >  GRANT SELECT ON *.* TO ic@'%' WITH GRANT OPTION;
+Query OK, 0 rows affected (0.00 sec)
+ MySQL  localhost:3306 ssl  SQL >  FLUSH PRIVILEGES;
+Query OK, 0 rows affected (0.00 sec)
+ MySQL  localhost:3306 ssl  SQL > 
+ MySQL  localhost:3306 ssl  SQL > SET sql_log_bin = ON; 
+Query OK, 0 rows affected (0.00 sec)
+ MySQL  localhost:3306 ssl  SQL > \js
+Switching to JavaScript mode...
+ MySQL  10.0.0.12:3306 ssl  JS > dba.configureLocalInstance();
+Please provide the password for 'root@localhost:3306': ******
+
+Detecting the configuration file...
+Found configuration file at standard location: /etc/my.cnf
+
+Do you want to modify this file? [Y|n]:  [Y|n]: 
+Validating instance...
+
+The instance 'localhost:3306' is valid for Cluster usage
+You can now use it in an InnoDB Cluster.
+
+{
+    "status": "ok"
+}
+ MySQL  10.0.0.12:3306 ssl  JS > dba.checkInstanceConfiguration('ic:oracle@10.0.0.12:3306')
+Validating instance...
+
+The instance '10.0.0.12:3306' is valid for Cluster usage
+{
+    "status": "ok"
+}
+ MySQL  10.0.0.12:3306 ssl  JS > var cluster = dba.createCluster( 'myCluster');
+A new InnoDB cluster will be created on instance 'ic@10.0.0.12:3306'.
+
+Creating InnoDB cluster 'myCluster' on 'ic@10.0.0.12:3306'...
+Adding Seed Instance...
+
+Cluster successfully created. Use Cluster.addInstance() to add MySQL instances.
+At least 3 instances are needed for the cluster to be able to withstand up to
+one server failure.
+
+ MySQL  10.0.0.12:3306 ssl  JS > cluster.status();
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "primary": "10.0.0.12:3306", 
+        "ssl": "REQUIRED", 
+        "status": "OK_NO_TOLERANCE", 
+        "statusText": "Cluster is NOT tolerant to any failures.", 
+        "topology": {
+            "10.0.0.12:3306": {
+                "address": "10.0.0.12:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }
+        }
+    }
+}
+

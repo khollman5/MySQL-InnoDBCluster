@@ -1,0 +1,643 @@
+-bash-4.2$ sudo yum install -y mysql*commercial*rpmLoaded plugins: ulninfo
+Examining mysql-commercial-client-5.7.19-1.1.el7.x86_64.rpm: mysql-commercial-client-5.7.19-1.1.el7.x86_64
+Marking mysql-commercial-client-5.7.19-1.1.el7.x86_64.rpm to be installed
+Examining mysql-commercial-common-5.7.19-1.1.el7.x86_64.rpm: mysql-commercial-common-5.7.19-1.1.el7.x86_64
+Marking mysql-commercial-common-5.7.19-1.1.el7.x86_64.rpm to be installed
+Examining mysql-commercial-libs-5.7.19-1.1.el7.x86_64.rpm: mysql-commercial-libs-5.7.19-1.1.el7.x86_64
+Marking mysql-commercial-libs-5.7.19-1.1.el7.x86_64.rpm to be installed
+Examining mysql-commercial-server-5.7.19-1.1.el7.x86_64.rpm: mysql-commercial-server-5.7.19-1.1.el7.x86_64
+Marking mysql-commercial-server-5.7.19-1.1.el7.x86_64.rpm to be installed
+Examining mysql-router-commercial-2.1.4-1.1.el7.x86_64.rpm: mysql-router-commercial-2.1.4-1.1.el7.x86_64
+Marking mysql-router-commercial-2.1.4-1.1.el7.x86_64.rpm to be installed
+Examining mysql-shell-commercial-1.0.10-1.1.el7.x86_64.rpm: mysql-shell-commercial-1.0.10-1.1.el7.x86_64
+Marking mysql-shell-commercial-1.0.10-1.1.el7.x86_64.rpm to be installed
+Resolving Dependencies
+--> Running transaction check
+---> Package mysql-commercial-client.x86_64 0:5.7.19-1.1.el7 will be installed
+---> Package mysql-commercial-common.x86_64 0:5.7.19-1.1.el7 will be installed
+---> Package mysql-commercial-libs.x86_64 0:5.7.19-1.1.el7 will be installed
+---> Package mysql-commercial-server.x86_64 0:5.7.19-1.1.el7 will be installed
+--> Processing Dependency: /usr/bin/perl for package: mysql-commercial-server-5.7.19-1.1.el7.x86_64
+--> Processing Dependency: perl(Getopt::Long) for package: mysql-commercial-server-5.7.19-1.1.el7.x86_64
+--> Processing Dependency: perl(strict) for package: mysql-commercial-server-5.7.19-1.1.el7.x86_64
+---> Package mysql-router-commercial.x86_64 0:2.1.4-1.1.el7 will be installed
+---> Package mysql-shell-commercial.x86_64 0:1.0.10-1.1.el7 will be installed
+--> Running transaction check
+---> Package perl.x86_64 4:5.16.3-292.el7 will be installed
+--> Processing Dependency: perl-libs = 4:5.16.3-292.el7 for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Scalar::Util) >= 1.10 for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Socket) >= 1.3 for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl-libs for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Carp) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(threads) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Scalar::Util) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Cwd) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Storable) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Time::Local) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Filter::Util::Call) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(File::Spec::Unix) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(File::Path) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Pod::Simple::XHTML) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(File::Spec::Functions) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(threads::shared) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(File::Spec) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Pod::Simple::Search) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Exporter) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(constant) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl-macros for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Time::HiRes) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(Socket) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: perl(File::Temp) for package: 4:perl-5.16.3-292.el7.x86_64
+--> Processing Dependency: libperl.so()(64bit) for package: 4:perl-5.16.3-292.el7.x86_64
+---> Package perl-Getopt-Long.noarch 0:2.40-2.el7 will be installed
+--> Processing Dependency: perl(Pod::Usage) >= 1.14 for package: perl-Getopt-Long-2.40-2.el7.noarch
+--> Processing Dependency: perl(Text::ParseWords) for package: perl-Getopt-Long-2.40-2.el7.noarch
+--> Running transaction check
+---> Package perl-Carp.noarch 0:1.26-244.el7 will be installed
+---> Package perl-Exporter.noarch 0:5.68-3.el7 will be installed
+---> Package perl-File-Path.noarch 0:2.09-2.el7 will be installed
+---> Package perl-File-Temp.noarch 0:0.23.01-3.el7 will be installed
+---> Package perl-Filter.x86_64 0:1.49-3.el7 will be installed
+---> Package perl-PathTools.x86_64 0:3.40-5.el7 will be installed
+---> Package perl-Pod-Simple.noarch 1:3.28-4.el7 will be installed
+--> Processing Dependency: perl(Pod::Escapes) >= 1.04 for package: 1:perl-Pod-Simple-3.28-4.el7.noarch
+--> Processing Dependency: perl(Encode) for package: 1:perl-Pod-Simple-3.28-4.el7.noarch
+---> Package perl-Pod-Usage.noarch 0:1.63-3.el7 will be installed
+--> Processing Dependency: perl(Pod::Text) >= 3.15 for package: perl-Pod-Usage-1.63-3.el7.noarch
+--> Processing Dependency: perl-Pod-Perldoc for package: perl-Pod-Usage-1.63-3.el7.noarch
+---> Package perl-Scalar-List-Utils.x86_64 0:1.27-248.el7 will be installed
+---> Package perl-Socket.x86_64 0:2.010-4.el7 will be installed
+---> Package perl-Storable.x86_64 0:2.45-3.el7 will be installed
+---> Package perl-Text-ParseWords.noarch 0:3.29-4.el7 will be installed
+---> Package perl-Time-HiRes.x86_64 4:1.9725-3.el7 will be installed
+---> Package perl-Time-Local.noarch 0:1.2300-2.el7 will be installed
+---> Package perl-constant.noarch 0:1.27-2.el7 will be installed
+---> Package perl-libs.x86_64 4:5.16.3-292.el7 will be installed
+---> Package perl-macros.x86_64 4:5.16.3-292.el7 will be installed
+---> Package perl-threads.x86_64 0:1.87-4.el7 will be installed
+---> Package perl-threads-shared.x86_64 0:1.43-6.el7 will be installed
+--> Running transaction check
+---> Package perl-Encode.x86_64 0:2.51-7.el7 will be installed
+---> Package perl-Pod-Escapes.noarch 1:1.04-292.el7 will be installed
+---> Package perl-Pod-Perldoc.noarch 0:3.20-4.el7 will be installed
+--> Processing Dependency: perl(parent) for package: perl-Pod-Perldoc-3.20-4.el7.noarch
+--> Processing Dependency: perl(HTTP::Tiny) for package: perl-Pod-Perldoc-3.20-4.el7.noarch
+---> Package perl-podlators.noarch 0:2.5.1-3.el7 will be installed
+--> Running transaction check
+---> Package perl-HTTP-Tiny.noarch 0:0.033-3.el7 will be installed
+---> Package perl-parent.noarch 1:0.225-244.el7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+===============================================================================================================
+ Package                   Arch     Version             Repository                                        Size
+===============================================================================================================
+Installing:
+ mysql-commercial-client   x86_64   5.7.19-1.1.el7      /mysql-commercial-client-5.7.19-1.1.el7.x86_64    95 M
+ mysql-commercial-common   x86_64   5.7.19-1.1.el7      /mysql-commercial-common-5.7.19-1.1.el7.x86_64   2.5 M
+ mysql-commercial-libs     x86_64   5.7.19-1.1.el7      /mysql-commercial-libs-5.7.19-1.1.el7.x86_64     8.6 M
+ mysql-commercial-server   x86_64   5.7.19-1.1.el7      /mysql-commercial-server-5.7.19-1.1.el7.x86_64   831 M
+ mysql-router-commercial   x86_64   2.1.4-1.1.el7       /mysql-router-commercial-2.1.4-1.1.el7.x86_64    9.3 M
+ mysql-shell-commercial    x86_64   1.0.10-1.1.el7      /mysql-shell-commercial-1.0.10-1.1.el7.x86_64     17 M
+Installing for dependencies:
+ perl                      x86_64   4:5.16.3-292.el7    ol7_latest                                       8.0 M
+ perl-Carp                 noarch   1.26-244.el7        ol7_latest                                        19 k
+ perl-Encode               x86_64   2.51-7.el7          ol7_latest                                       1.5 M
+ perl-Exporter             noarch   5.68-3.el7          ol7_latest                                        28 k
+ perl-File-Path            noarch   2.09-2.el7          ol7_latest                                        26 k
+ perl-File-Temp            noarch   0.23.01-3.el7       ol7_latest                                        56 k
+ perl-Filter               x86_64   1.49-3.el7          ol7_latest                                        76 k
+ perl-Getopt-Long          noarch   2.40-2.el7          ol7_latest                                        55 k
+ perl-HTTP-Tiny            noarch   0.033-3.el7         ol7_latest                                        38 k
+ perl-PathTools            x86_64   3.40-5.el7          ol7_latest                                        82 k
+ perl-Pod-Escapes          noarch   1:1.04-292.el7      ol7_latest                                        50 k
+ perl-Pod-Perldoc          noarch   3.20-4.el7          ol7_latest                                        86 k
+ perl-Pod-Simple           noarch   1:3.28-4.el7        ol7_latest                                       216 k
+ perl-Pod-Usage            noarch   1.63-3.el7          ol7_latest                                        26 k
+ perl-Scalar-List-Utils    x86_64   1.27-248.el7        ol7_latest                                        35 k
+ perl-Socket               x86_64   2.010-4.el7         ol7_latest                                        48 k
+ perl-Storable             x86_64   2.45-3.el7          ol7_latest                                        76 k
+ perl-Text-ParseWords      noarch   3.29-4.el7          ol7_latest                                        13 k
+ perl-Time-HiRes           x86_64   4:1.9725-3.el7      ol7_latest                                        44 k
+ perl-Time-Local           noarch   1.2300-2.el7        ol7_latest                                        24 k
+ perl-constant             noarch   1.27-2.el7          ol7_latest                                        18 k
+ perl-libs                 x86_64   4:5.16.3-292.el7    ol7_latest                                       687 k
+ perl-macros               x86_64   4:5.16.3-292.el7    ol7_latest                                        43 k
+ perl-parent               noarch   1:0.225-244.el7     ol7_latest                                        12 k
+ perl-podlators            noarch   2.5.1-3.el7         ol7_latest                                       111 k
+ perl-threads              x86_64   1.87-4.el7          ol7_latest                                        48 k
+ perl-threads-shared       x86_64   1.43-6.el7          ol7_latest                                        38 k
+
+Transaction Summary
+===============================================================================================================
+Install  6 Packages (+27 Dependent packages)
+
+Total size: 975 M
+Total download size: 11 M
+Installed size: 1.0 G
+Downloading packages:
+(1/27): perl-Carp-1.26-244.el7.noarch.rpm                                               |  19 kB  00:00:00     
+(2/27): perl-Encode-2.51-7.el7.x86_64.rpm                                               | 1.5 MB  00:00:00     
+(3/27): perl-Exporter-5.68-3.el7.noarch.rpm                                             |  28 kB  00:00:00     
+(4/27): perl-File-Path-2.09-2.el7.noarch.rpm                                            |  26 kB  00:00:00     
+(5/27): perl-File-Temp-0.23.01-3.el7.noarch.rpm                                         |  56 kB  00:00:00     
+(6/27): perl-Filter-1.49-3.el7.x86_64.rpm                                               |  76 kB  00:00:00     
+(7/27): perl-Getopt-Long-2.40-2.el7.noarch.rpm                                          |  55 kB  00:00:00     
+(8/27): perl-HTTP-Tiny-0.033-3.el7.noarch.rpm                                           |  38 kB  00:00:00     
+(9/27): perl-PathTools-3.40-5.el7.x86_64.rpm                                            |  82 kB  00:00:00     
+(10/27): perl-Pod-Escapes-1.04-292.el7.noarch.rpm                                       |  50 kB  00:00:00     
+(11/27): perl-Pod-Perldoc-3.20-4.el7.noarch.rpm                                         |  86 kB  00:00:00     
+(12/27): perl-5.16.3-292.el7.x86_64.rpm                                                 | 8.0 MB  00:00:01     
+(13/27): perl-Pod-Simple-3.28-4.el7.noarch.rpm                                          | 216 kB  00:00:00     
+(14/27): perl-Pod-Usage-1.63-3.el7.noarch.rpm                                           |  26 kB  00:00:00     
+(15/27): perl-Scalar-List-Utils-1.27-248.el7.x86_64.rpm                                 |  35 kB  00:00:00     
+(16/27): perl-Socket-2.010-4.el7.x86_64.rpm                                             |  48 kB  00:00:00     
+(17/27): perl-Storable-2.45-3.el7.x86_64.rpm                                            |  76 kB  00:00:00     
+(18/27): perl-Text-ParseWords-3.29-4.el7.noarch.rpm                                     |  13 kB  00:00:00     
+(19/27): perl-Time-HiRes-1.9725-3.el7.x86_64.rpm                                        |  44 kB  00:00:00     
+(20/27): perl-constant-1.27-2.el7.noarch.rpm                                            |  18 kB  00:00:00     
+(21/27): perl-libs-5.16.3-292.el7.x86_64.rpm                                            | 687 kB  00:00:00     
+(22/27): perl-macros-5.16.3-292.el7.x86_64.rpm                                          |  43 kB  00:00:00     
+(23/27): perl-parent-0.225-244.el7.noarch.rpm                                           |  12 kB  00:00:00     
+(24/27): perl-Time-Local-1.2300-2.el7.noarch.rpm                                        |  24 kB  00:00:00     
+(25/27): perl-threads-1.87-4.el7.x86_64.rpm                                             |  48 kB  00:00:00     
+(26/27): perl-podlators-2.5.1-3.el7.noarch.rpm                                          | 111 kB  00:00:00     
+(27/27): perl-threads-shared-1.43-6.el7.x86_64.rpm                                      |  38 kB  00:00:00     
+---------------------------------------------------------------------------------------------------------------
+Total                                                                          8.3 MB/s |  11 MB  00:00:01     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : mysql-commercial-common-5.7.19-1.1.el7.x86_64                                              1/33 
+  Installing : mysql-commercial-libs-5.7.19-1.1.el7.x86_64                                                2/33 
+  Installing : mysql-commercial-client-5.7.19-1.1.el7.x86_64                                              3/33 
+  Installing : 1:perl-parent-0.225-244.el7.noarch                                                         4/33 
+  Installing : perl-HTTP-Tiny-0.033-3.el7.noarch                                                          5/33 
+  Installing : perl-podlators-2.5.1-3.el7.noarch                                                          6/33 
+  Installing : perl-Pod-Perldoc-3.20-4.el7.noarch                                                         7/33 
+  Installing : 1:perl-Pod-Escapes-1.04-292.el7.noarch                                                     8/33 
+  Installing : perl-Text-ParseWords-3.29-4.el7.noarch                                                     9/33 
+  Installing : perl-Encode-2.51-7.el7.x86_64                                                             10/33 
+  Installing : perl-Pod-Usage-1.63-3.el7.noarch                                                          11/33 
+  Installing : 4:perl-macros-5.16.3-292.el7.x86_64                                                       12/33 
+  Installing : 4:perl-libs-5.16.3-292.el7.x86_64                                                         13/33 
+  Installing : perl-Storable-2.45-3.el7.x86_64                                                           14/33 
+  Installing : perl-Exporter-5.68-3.el7.noarch                                                           15/33 
+  Installing : perl-constant-1.27-2.el7.noarch                                                           16/33 
+  Installing : perl-Time-Local-1.2300-2.el7.noarch                                                       17/33 
+  Installing : perl-Socket-2.010-4.el7.x86_64                                                            18/33 
+  Installing : perl-Carp-1.26-244.el7.noarch                                                             19/33 
+  Installing : 4:perl-Time-HiRes-1.9725-3.el7.x86_64                                                     20/33 
+  Installing : perl-PathTools-3.40-5.el7.x86_64                                                          21/33 
+  Installing : perl-Scalar-List-Utils-1.27-248.el7.x86_64                                                22/33 
+  Installing : perl-File-Temp-0.23.01-3.el7.noarch                                                       23/33 
+  Installing : perl-File-Path-2.09-2.el7.noarch                                                          24/33 
+  Installing : perl-threads-shared-1.43-6.el7.x86_64                                                     25/33 
+  Installing : perl-threads-1.87-4.el7.x86_64                                                            26/33 
+  Installing : perl-Filter-1.49-3.el7.x86_64                                                             27/33 
+  Installing : 1:perl-Pod-Simple-3.28-4.el7.noarch                                                       28/33 
+  Installing : perl-Getopt-Long-2.40-2.el7.noarch                                                        29/33 
+  Installing : 4:perl-5.16.3-292.el7.x86_64                                                              30/33 
+  Installing : mysql-commercial-server-5.7.19-1.1.el7.x86_64                                             31/33 
+  Installing : mysql-router-commercial-2.1.4-1.1.el7.x86_64                                              32/33 
+  Installing : mysql-shell-commercial-1.0.10-1.1.el7.x86_64                                              33/33 
+  Verifying  : mysql-commercial-libs-5.7.19-1.1.el7.x86_64                                                1/33 
+  Verifying  : perl-HTTP-Tiny-0.033-3.el7.noarch                                                          2/33 
+  Verifying  : perl-threads-shared-1.43-6.el7.x86_64                                                      3/33 
+  Verifying  : perl-Storable-2.45-3.el7.x86_64                                                            4/33 
+  Verifying  : mysql-commercial-client-5.7.19-1.1.el7.x86_64                                              5/33 
+  Verifying  : perl-Exporter-5.68-3.el7.noarch                                                            6/33 
+  Verifying  : perl-constant-1.27-2.el7.noarch                                                            7/33 
+  Verifying  : perl-PathTools-3.40-5.el7.x86_64                                                           8/33 
+  Verifying  : 4:perl-macros-5.16.3-292.el7.x86_64                                                        9/33 
+  Verifying  : mysql-shell-commercial-1.0.10-1.1.el7.x86_64                                              10/33 
+  Verifying  : 4:perl-5.16.3-292.el7.x86_64                                                              11/33 
+  Verifying  : perl-File-Temp-0.23.01-3.el7.noarch                                                       12/33 
+  Verifying  : 1:perl-Pod-Simple-3.28-4.el7.noarch                                                       13/33 
+  Verifying  : perl-Time-Local-1.2300-2.el7.noarch                                                       14/33 
+  Verifying  : 4:perl-libs-5.16.3-292.el7.x86_64                                                         15/33 
+  Verifying  : perl-Pod-Perldoc-3.20-4.el7.noarch                                                        16/33 
+  Verifying  : perl-Socket-2.010-4.el7.x86_64                                                            17/33 
+  Verifying  : perl-Encode-2.51-7.el7.x86_64                                                             18/33 
+  Verifying  : perl-Carp-1.26-244.el7.noarch                                                             19/33 
+  Verifying  : mysql-router-commercial-2.1.4-1.1.el7.x86_64                                              20/33 
+  Verifying  : 4:perl-Time-HiRes-1.9725-3.el7.x86_64                                                     21/33 
+  Verifying  : perl-Scalar-List-Utils-1.27-248.el7.x86_64                                                22/33 
+  Verifying  : 1:perl-Pod-Escapes-1.04-292.el7.noarch                                                    23/33 
+  Verifying  : mysql-commercial-server-5.7.19-1.1.el7.x86_64                                             24/33 
+  Verifying  : perl-Pod-Usage-1.63-3.el7.noarch                                                          25/33 
+  Verifying  : mysql-commercial-common-5.7.19-1.1.el7.x86_64                                             26/33 
+  Verifying  : perl-podlators-2.5.1-3.el7.noarch                                                         27/33 
+  Verifying  : perl-Getopt-Long-2.40-2.el7.noarch                                                        28/33 
+  Verifying  : perl-File-Path-2.09-2.el7.noarch                                                          29/33 
+  Verifying  : perl-threads-1.87-4.el7.x86_64                                                            30/33 
+  Verifying  : perl-Filter-1.49-3.el7.x86_64                                                             31/33 
+  Verifying  : perl-Text-ParseWords-3.29-4.el7.noarch                                                    32/33 
+  Verifying  : 1:perl-parent-0.225-244.el7.noarch                                                        33/33 
+
+Installed:
+  mysql-commercial-client.x86_64 0:5.7.19-1.1.el7        mysql-commercial-common.x86_64 0:5.7.19-1.1.el7       
+  mysql-commercial-libs.x86_64 0:5.7.19-1.1.el7          mysql-commercial-server.x86_64 0:5.7.19-1.1.el7       
+  mysql-router-commercial.x86_64 0:2.1.4-1.1.el7         mysql-shell-commercial.x86_64 0:1.0.10-1.1.el7        
+
+Dependency Installed:
+  perl.x86_64 4:5.16.3-292.el7                             perl-Carp.noarch 0:1.26-244.el7                     
+  perl-Encode.x86_64 0:2.51-7.el7                          perl-Exporter.noarch 0:5.68-3.el7                   
+  perl-File-Path.noarch 0:2.09-2.el7                       perl-File-Temp.noarch 0:0.23.01-3.el7               
+  perl-Filter.x86_64 0:1.49-3.el7                          perl-Getopt-Long.noarch 0:2.40-2.el7                
+  perl-HTTP-Tiny.noarch 0:0.033-3.el7                      perl-PathTools.x86_64 0:3.40-5.el7                  
+  perl-Pod-Escapes.noarch 1:1.04-292.el7                   perl-Pod-Perldoc.noarch 0:3.20-4.el7                
+  perl-Pod-Simple.noarch 1:3.28-4.el7                      perl-Pod-Usage.noarch 0:1.63-3.el7                  
+  perl-Scalar-List-Utils.x86_64 0:1.27-248.el7             perl-Socket.x86_64 0:2.010-4.el7                    
+  perl-Storable.x86_64 0:2.45-3.el7                        perl-Text-ParseWords.noarch 0:3.29-4.el7            
+  perl-Time-HiRes.x86_64 4:1.9725-3.el7                    perl-Time-Local.noarch 0:1.2300-2.el7               
+  perl-constant.noarch 0:1.27-2.el7                        perl-libs.x86_64 4:5.16.3-292.el7                   
+  perl-macros.x86_64 4:5.16.3-292.el7                      perl-parent.noarch 1:0.225-244.el7                  
+  perl-podlators.noarch 0:2.5.1-3.el7                      perl-threads.x86_64 0:1.87-4.el7                    
+  perl-threads-shared.x86_64 0:1.43-6.el7                 
+
+Complete!
+-bash-4.2$ 
+-bash-4.2$ 
+-bash-4.2$ sudo systemctl start mysqld.service
+-bash-4.2$ sudo systemctl enable mysqld.service
+-bash-4.2$ 
+-bash-4.2$ sudo vi + /etc/my.cnf
+-bash-4.2$ sudo systemctl restart mysqld.service
+-bash-4.2$ sudo grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log |tail -1
+2017-09-29T08:58:42.129619Z 1 [Note] A temporary password is generated for root@localhost: uSxPDHrtT5)Y
+-bash-4.2$ mysql -uroot -p 
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3
+Server version: 5.7.19-enterprise-commercial-advanced
+
+Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> alter user 'root'@'localhost' identified by 'oracle';
+Query OK, 0 rows affected (0,00 sec)
+
+mysql> exit
+Bye
+-bash-4.2$ sudo -i
+[root@ic1 ~]# mysqlsh
+MySQL Shell 1.0.10
+
+Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+
+Currently in JavaScript mode. Use \sql to switch to SQL mode and execute queries.
+mysql-js> dba.configureLocalInstance();
+Please provide the password for 'root@localhost:3306': 
+
+Detecting the configuration file...
+Found configuration file at standard location: /etc/my.cnf
+Do you want to modify this file? [Y|n]:  [Y|n]: 
+MySQL user 'root' cannot be verified to have access to other hosts in the network.
+
+1) Create root@% with necessary grants
+2) Create account with different name
+3) Continue without creating account
+4) Cancel
+Please select an option [1]: 2
+Please provide an account name (e.g: icroot@%) to have it created with the necessary
+privileges or leave empty and press Enter to cancel.
+Account Name: ic
+Password for new account: 
+Confirm password: 
+Validating instance...
+
+The configuration has been updated but it is required to restart the server.
+
+{
+    "config_errors": [
+        {
+            "action": "restart", 
+            "current": "OFF", 
+            "option": "enforce_gtid_consistency", 
+            "required": "ON"
+        },
+        {
+            "action": "restart", 
+            "current": "OFF", 
+            "option": "gtid_mode", 
+            "required": "ON"
+        },
+        {
+            "action": "restart", 
+            "current": "0", 
+            "option": "log_bin", 
+            "required": "1"
+        },
+        {
+            "action": "restart", 
+            "current": "0", 
+            "option": "log_slave_updates", 
+            "required": "ON"
+        },
+        {
+            "action": "restart", 
+            "current": "FILE", 
+            "option": "master_info_repository", 
+            "required": "TABLE"
+        },
+        {
+            "action": "restart", 
+            "current": "FILE", 
+            "option": "relay_log_info_repository", 
+            "required": "TABLE"
+        },
+        {
+            "action": "restart", 
+            "current": "OFF", 
+            "option": "transaction_write_set_extraction", 
+            "required": "XXHASH64"
+        }
+    ], 
+    "errors": [], 
+    "restart_required": true, 
+    "status": "error"
+}
+mysql-js> \q
+Bye!
+[root@ic1 ~]# systemctl restart mysqld.service
+[root@ic1 ~]# mysqlsh
+MySQL Shell 1.0.10
+
+Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+
+Currently in JavaScript mode. Use \sql to switch to SQL mode and execute queries.
+mysql-js> dba.checkInstanceConfiguration('root@localhost:3306');
+Please provide the password for 'root@localhost:3306': 
+Validating instance...
+
+The instance 'localhost:3306' is valid for Cluster usage
+{
+    "status": "ok"
+}
+mysql-js> \q
+Bye!
+[root@ic1 ~]# 
+[root@ic1 ~]# 
+[root@ic1 ~]# mysqlsh --uri ic@10.0.0.11:3306
+Creating a Session to 'ic@10.0.0.11:3306'
+Enter password: 
+Your MySQL connection id is 6
+Server version: 5.7.19-enterprise-commercial-advanced-log MySQL Enterprise Server - Advanced Edition (Commercial)
+No default schema selected; type \use <schema> to set one.
+MySQL Shell 1.0.10
+
+Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+
+Currently in JavaScript mode. Use \sql to switch to SQL mode and execute queries.
+mysql-js> var cluster = dba.createCluster( 'myCluster');
+A new InnoDB cluster will be created on instance 'ic@10.0.0.11:3306'.
+
+Warning: The instance configuration needs to be changed in order to
+create an InnoDB cluster. To see which changes will be made, please
+use the dba.checkInstanceConfiguration() function before confirming
+to change the configuration.
+
+Should the configuration be changed accordingly? [y|N]: y
+
+Creating InnoDB cluster 'myCluster' on 'ic@10.0.0.11:3306'...
+Dba.createCluster: ERROR: 1 table(s) do not have a Primary Key or Primary Key Equivalent (non-null unique key).
+ERROR: Error starting cluster: The operation could not continue due to the following requirements not being met:
+Non-compatible tables found in database. (RuntimeError)
+mysql-js> \q
+Bye!
+[root@ic1 ~]# 
+[root@ic1 ~]# 
+[root@ic1 ~]# 
+[root@ic1 ~]# mysql -uroot -p 
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 11
+Server version: 5.7.19-enterprise-commercial-advanced-log MySQL Enterprise Server - Advanced Edition (Commercial)
+
+Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> GRANT SELECT ON sys.* TO ic@'%' WITH GRANT OPTION;
+Query OK, 0 rows affected (0,01 sec)
+
+mysql> exit
+Bye
+[root@ic1 ~]# mysqlsh --uri ic@10.0.0.11:3306
+Creating a Session to 'ic@10.0.0.11:3306'
+Enter password: 
+Your MySQL connection id is 13
+Server version: 5.7.19-enterprise-commercial-advanced-log MySQL Enterprise Server - Advanced Edition (Commercial)
+No default schema selected; type \use <schema> to set one.
+MySQL Shell 1.0.10
+
+Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+
+Currently in JavaScript mode. Use \sql to switch to SQL mode and execute queries.
+mysql-js> var cluster = dba.createCluster( 'myCluster');
+A new InnoDB cluster will be created on instance 'ic@10.0.0.11:3306'.
+
+Creating InnoDB cluster 'myCluster' on 'ic@10.0.0.11:3306'...
+Adding Seed Instance...
+
+Cluster successfully created. Use Cluster.addInstance() to add MySQL instances.
+At least 3 instances are needed for the cluster to be able to withstand up to
+one server failure.
+
+mysql-js> cluster.status();
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "primary": "10.0.0.11:3306", 
+        "status": "OK_NO_TOLERANCE", 
+        "statusText": "Cluster is NOT tolerant to any failures.", 
+        "topology": {
+            "10.0.0.11:3306": {
+                "address": "10.0.0.11:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }
+        }
+    }
+}
+mysql-js> 
+mysql-js> 
+mysql-js> cluster.addInstance('ic@10.0.0.12:3306');
+A new instance will be added to the InnoDB cluster. Depending on the amount of
+data on the cluster this might take from a few seconds to several hours.
+
+Please provide the password for 'ic@10.0.0.12:3306': 
+Adding instance to the cluster ...
+
+Cluster.addInstance: WARNING: Not running locally on the server and can not access its error log.
+ERROR: 
+Group Replication join failed.
+ERROR: Error joining instance to cluster: '10.0.0.12:3306' - Query failed. 3092 (HY000): The server is not configured properly to be an active member of the group. Please see more details on error log.. Query: START group_replication (RuntimeError)
+mysql-js> 
+mysql-js> \q
+Bye!
+[root@ic1 ~]# mysql -uroot -p 
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 37
+Server version: 5.7.19-enterprise-commercial-advanced-log MySQL Enterprise Server - Advanced Edition (Commercial)
+
+Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> 
+mysql> 
+mysql> 
+mysql> GRANT ALL ON *.* TO 'ic'@'%';
+Query OK, 0 rows affected (0,01 sec)
+
+mysql> exit
+Bye
+[root@ic1 ~]# mysqlsh --uri ic@10.0.0.11:3306
+Creating a Session to 'ic@10.0.0.11:3306'
+Enter password: 
+Your MySQL connection id is 39
+Server version: 5.7.19-enterprise-commercial-advanced-log MySQL Enterprise Server - Advanced Edition (Commercial)
+No default schema selected; type \use <schema> to set one.
+MySQL Shell 1.0.10
+
+Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+
+Currently in JavaScript mode. Use \sql to switch to SQL mode and execute queries.
+mysql-js> 
+mysql-js> var cluster = dba.getCluster( 'myCluster');
+mysql-js> cluster.status();
+{
+    "clusterName": "myCluster", 
+    "defaultReplicaSet": {
+        "name": "default", 
+        "primary": "10.0.0.11:3306", 
+        "status": "OK_NO_TOLERANCE", 
+        "statusText": "Cluster is NOT tolerant to any failures.", 
+        "topology": {
+            "10.0.0.11:3306": {
+                "address": "10.0.0.11:3306", 
+                "mode": "R/W", 
+                "readReplicas": {}, 
+                "role": "HA", 
+                "status": "ONLINE"
+            }
+        }
+    }
+}
+mysql-js> 
+mysql-js> 
+mysql-js> cluster.addInstance('ic@10.0.0.12:3306');
+A new instance will be added to the InnoDB cluster. Depending on the amount of
+data on the cluster this might take from a few seconds to several hours.
+
+Please provide the password for 'ic@10.0.0.12:3306': 
+Adding instance to the cluster ...
+
+Cluster.addInstance: WARNING: Not running locally on the server and can not access its error log.
+ERROR: 
+Group Replication join failed.
+ERROR: Error joining instance to cluster: '10.0.0.12:3306' - Query failed. 3092 (HY000): The server is not configured properly to be an active member of the group. Please see more details on error log.. Query: START group_replication (RuntimeError)
+mysql-js> dba.verbose=1
+1
+mysql-js> cluster.addInstance('ic@10.0.0.12:3306');
+A new instance will be added to the InnoDB cluster. Depending on the amount of
+data on the cluster this might take from a few seconds to several hours.
+
+Please provide the password for 'ic@10.0.0.12:3306': 
+Adding instance to the cluster ...
+
+=========================== MySQL Provision Output ===========================
+Enter the password for server (ic@10.0.0.12:3306): 
+Enter the password for replication_user (mysql_innodb_cluster_rp429600701): 
+Enter the password for peer_server (ic@10.0.0.11:3306): 
+
+Running join command on '10.0.0.12:3306'.
+Checking Group Replication prerequisites.
+* Comparing options compatibility with Group Replication... PASS
+Server configuration is compliant with the requirements.
+* Comparing options compatibility with the group of the given peer-instance... PASS
+Server configuration is compliant with current group configuration.
+* Checking server version... PASS
+Server is 5.7.19
+
+* Checking that server_id is unique... PASS
+The server_id is valid.
+
+* Checking compatibility of Multi-Threaded Slave settings... PASS
+Multi-Threaded Slave settings are compatible with Group Replication.
+
+The user mysql_innodb_cluster_rp429600701@'%' does not exists on '10.0.0.12:3306' and requires to be created.
+The user ic@'10.0.0.12' does not exists on '10.0.0.12:3306' and requires to be created.
+Successfully granted REPLICATION SLAVE to user: mysql_innodb_cluster_rp429600701@%
+Successfully granted REPLICATION SLAVE to user: mysql_innodb_cluster_rp429600701@localhost
+* Checking user privileges... PASS
+* Checking compliance of existing tables... PASS
+
+WARNING: Not running locally on the server and can not access its error log.
+
+The user ic@'10.0.0.11' does not exists on '10.0.0.11:3306' and requires to be created.
+* Checking user privileges... PASS
+
+Joining Group Replication group: '1a9cbb24-a4f5-11e7-9fc1-080027e5efc5'
+* Running change master command
+Attempting to join to Group Replication group...
+ERROR: 
+Group Replication join failed.
+ERROR: Error joining instance to cluster: '10.0.0.12:3306' - Query failed. 3092 (HY000): The server is not configured properly to be an active member of the group. Please see more details on error log.. Query: START group_replication
+==============================================================================
+Cluster.addInstance: WARNING: Not running locally on the server and can not access its error log.
+ERROR: 
+Group Replication join failed.
+ERROR: Error joining instance to cluster: '10.0.0.12:3306' - Query failed. 3092 (HY000): The server is not configured properly to be an active member of the group. Please see more details on error log.. Query: START group_replication (RuntimeError)
+
