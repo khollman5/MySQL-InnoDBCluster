@@ -1,0 +1,73 @@
+
+Command list sequence
+=====================
+# Reference: (Obrigado Miguel!) https://github.com/miguelaraujo/ClusterSet-Demo
+
+To simplify the command execution sequence, this sections aims to help summarize the technical commands required to create the whole platform. And on a default path & port configuration, to ease operational deployments for all those 000's of installs and posterior admin & ops tasks.
+
+	On all servers / nodes:
+	(download the mysql repo binary for your env)
+yum -y localinstall ./mysql80-community-release-el8-9.noarch.rpm
+	On the database nodes only:
+yum install -y mysql-community-server-0:8.0.36-1.el8.x86_64
+yum install -y mysql-shell-0:8.0.36-1.el8.x86_64
+	On the MySQL Router dedicated nodes only:
+yum install -y mysql-router-community-0:8.0.36-1.el8.x86_64
+	On each of the database nodes:
+systemctl start mysqld
+systemctl enable mysqld
+
+pswd=`grep -oP '(?<= A temporary password is generated for root@localhost: ).*' /var/log/mysqld.log | tail -1`
+mysql -uroot -p$pswd -S /var/lib/mysql/mysql.sock
+ alter user 'root'@'localhost' identified by 'Contr4sen!A';
+ flush privileges;
+ SET sql_log_bin = OFF; 
+ create user 'icadmin'@'localhost' identified by 'Contr4sen!A';
+ grant all on *.* to 'icadmin'@'localhost' with grant option;
+ create user 'icadmin'@'%' identified by 'Contr4sen!A';
+ grant all on *.* to 'icadmin'@'%' with grant option;
+ flush privileges;
+ SET sql_log_bin = ON;
+
+mysqlsh icadmin:'Contr4sen!A'@localhost:3306 -- dba check-instance-configuration
+mysqlsh icadmin:'Contr4sen!A'@localhost:3306 -- dba configure-local-instance --restart=true --interactive=FALSE
+	On just one of the database nodes:
+mysqlsh icadmin:'Contr4sen!A'@dbnode01:3306 -- dba create-cluster VLC
+mysqlsh icadmin:'Contr4sen!A'@dbnode01:3306 -- cluster status --extended=0
+mysqlsh icadmin:'Contr4sen!A'@dbnode01:3306 -- cluster status --extended=1
+	Continuing on the same database node:
+mysqlsh icadmin@dbnode01:3306 -- cluster add-instance icadmin:'Contr4sen!A'@dbnode02:3306 --recoveryMethod=clone
+mysqlsh icadmin@dbnode01:3306 -- cluster add-instance icadmin:'Contr4sen!A'@dbnode03:3306 --recoveryMethod=clone
+mysqlsh icadmin@dbnode01:3306 -- cluster status
+mysqlsh icadmin@dbnode01:3306 -- cluster describe
+	On one of the database nodes:
+mysqlsh icadmin@dbnode01:3306 -- cluster setup-router-account 'routerAdmin' --password='Contr4sen!A'
+	On the first router node, rtnode01:
+mysqlrouter --bootstrap icadmin:'Contr4sen!A'@dbnode02:3306 \
+ --name="router_VLC01" --account=’routerAdmin’ \
+ --conf-base-port=3306 --report-host=rtnode01 -u mysqlrouter
+systemctl start mysqlrouter
+	On the 2nd router node, rtnode02:
+mysqlrouter --bootstrap icadmin:'Contr4sen!A'@dbnode02:3306 \
+--name="router_VLC02" --account=’routerAdmin’ \
+--conf-base-port=3306 --report-host=rtnode02 -u mysqlrouter
+systemctl start mysqlrouter
+	On one of the database nodes, connected directly or via any router:
+mysqlsh icadmin@dbnode01:3306 -- cluster create-cluster-set csVLC
+mysqlsh icadmin@dbnode01:3306 -- clusterset status
+	On router server rtnode01:
+systemctl stop mysqlrouter
+mysqlrouter --bootstrap icadmin:'Contr4sen!A'@dbnode02:3306 \
+ --name="router_VLC01" --account=’routerAdmin’ \
+ --conf-base-port=3306 --report-host=rtnode01 --force -u mysqlrouter
+systemctl start mysqlrouter
+	On router server rtnode02:
+systemctl stop mysqlrouter
+mysqlrouter --bootstrap icadmin:'Contr4sen!A'@dbnode02:3306 \
+ --name="router_VLC02" --account=’routerAdmin’ \
+ --conf-base-port=3306 --report-host=rtnode02 --force -u mysqlrouter
+systemctl start mysqlrouter
+	Validation:
+mysqlsh icadmin@rtnode01:3306 -- clusterset routing-options
+
+
