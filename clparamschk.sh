@@ -2,8 +2,8 @@
 
 # --- CONFIG ---
 LOGIN_PATH="icadmin"
-REPLICA1="sage-p-db-04"
-REPLICA2="opsdt-p-db-04"
+REPLICA1="BI-instance-04"
+REPLICA2="analytics-instance-04"
 
 # --- SQL PARAMS ---
 PARAMS="'innodb_buffer_pool_size','innodb_redo_log_capacity','binlog_expire_logs_seconds',
