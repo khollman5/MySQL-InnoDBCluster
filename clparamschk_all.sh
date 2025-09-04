@@ -2,8 +2,8 @@
 
 # --- CONFIG ---
 LOGIN_PATH="icadmin"
-REPLICA1="sage-p-db-04"
-REPLICA2="opsdt-p-db-04"
+REPLICA1="BI-instance-04"
+REPLICA2="Analytics-instance-04"
 
 # --- SQL PARAMS ---
 SQL="SELECT variable_name, variable_value
